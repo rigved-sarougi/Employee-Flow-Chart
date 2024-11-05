@@ -1,59 +1,49 @@
 import streamlit as st
 import pandas as pd
-import graphviz as gv
+import graphviz
 
-# Mock data
-data = {
-    'Level': ['CNF', 'Super', 'Distributor', 'RSM', 'ASM', 
-              'CNF', 'Super', 'Distributor', 'RSM', 'ASM'],
-    'Entity': ['CNF-01', 'Super-001', 'Distributor-A', 'RSM-101', 'ASM-001', 
-               'CNF-02', 'Super-002', 'Distributor-B', 'RSM-102', 'ASM-002'],
-    'Employee Name': ['John Smith', 'John Smith', 'John Smith', 'John Smith', 'John Smith', 
-                      'Jane Doe', 'Jane Doe', 'Jane Doe', 'Jane Doe', 'Jane Doe'],
-    'Sales': [120000, 120000, 120000, 120000, 120000,
-              150000, 150000, 150000, 150000, 150000],
-    'Salary': [4000, 4000, 4000, 4000, 4000,
-               4500, 4500, 4500, 4500, 4500],
-    'Monthly Expenses': [500, 500, 500, 500, 500,
-                         600, 600, 600, 600, 600]
-}
+# Load data
+data = pd.read_csv('data.csv')
 
-# Create DataFrame
-df = pd.DataFrame(data)
+# Process numeric values from strings
+data['Sales - After Closing'] = data['Sales - After Closing'].replace('[\$,]', '', regex=True).astype(float)
+data['Salary'] = data['Salary'].replace('[\$,]', '', regex=True).astype(float)
+data['Additional Monthly Expenses'] = data['Additional Monthly Expenses'].replace('[\$,]', '', regex=True).astype(float)
 
-# Calculate Profit/Loss
-df['Profit/Loss'] = df['Sales'] - (df['Salary'] + df['Monthly Expenses'])
+# Calculate monthly profit/loss
+data['Total Monthly Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
+data['Profit/Loss'] = data['Sales - After Closing'] - data['Total Monthly Expenses']
 
-# Aggregate sales for each level
-aggregated_sales = df.groupby('Entity')['Sales'].sum().to_dict()
+# Filter options
+employee_filter = st.sidebar.multiselect('Select Employees', data['Employee Name'].unique())
+state_filter = st.sidebar.multiselect('Select States', data['Assigned State'].unique())
 
-# Streamlit app
-st.title("Employee Hierarchy Visualization with Sales at Each Point")
+filtered_data = data.copy()
+if employee_filter:
+    filtered_data = filtered_data[filtered_data['Employee Name'].isin(employee_filter)]
+if state_filter:
+    filtered_data = filtered_data[filtered_data['Assigned State'].isin(state_filter)]
 
-# Graphviz Digraph
-dot = gv.Digraph()
+# Display filtered data
+st.dataframe(filtered_data)
 
-# Create hierarchy in Graphviz
-parent_map = {
-    'Super': 'CNF',
-    'Distributor': 'Super',
-    'RSM': 'Distributor',
-    'ASM': 'RSM'
-}
+# Graphviz chart
+dot = graphviz.Digraph()
 
-for _, row in df.iterrows():
-    entity = row['Entity']
-    label = (f"{row['Employee Name']}\\n"
-             f"Sales: ${aggregated_sales[entity]}\\n"
-             f"Salary: ${row['Salary']}\\n"
-             f"Expenses: ${row['Monthly Expenses']}\\n"
-             f"Profit/Loss: ${row['Profit/Loss']}")
-    dot.node(entity, label)
+for _, row in filtered_data.iterrows():
+    emp_details = (
+        f"Name: {row['Employee Name']}\n"
+        f"Sales: ${row['Sales - After Closing']}\n"
+        f"Salary: ${row['Salary']}\n"
+        f"Expenses: ${row['Additional Monthly Expenses']}\n"
+        f"Profit/Loss: ${row['Profit/Loss']}"
+    )
+    dot.node(row['Employee Name'], emp_details)
     
-    # Add edges based on the hierarchy
-    if row['Level'] == 'CNF':
-        continue  # CNF has no parent
-    parent_entity = df[df['Entity'] == f"{parent_map[row['Level']]}-{entity.split('-')[1]}"]['Entity'].values[0]
-    dot.edge(parent_entity, entity)
+    # Add relational hierarchy
+    dot.edge(row['RSM'], row['ASM'], label="Reports to")
+    dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
+    dot.edge(row['Super'], row['Distributor'], label="Supervised by")
+    dot.edge(row['CNF'], row['Super'], label="Managed by")
 
 st.graphviz_chart(dot)
