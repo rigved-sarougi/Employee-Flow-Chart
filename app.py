@@ -34,6 +34,7 @@ st.dataframe(filtered_data)
 dot = graphviz.Digraph()
 
 for _, row in filtered_data.iterrows():
+    # Employee details
     emp_details = (
         f"Name: {row['Employee Name']}\n"
         f"Sales: ${row['Sales - After Closing']}\n"
@@ -41,26 +42,19 @@ for _, row in filtered_data.iterrows():
         f"Expenses: ${row['Additional Monthly Expenses']}\n"
         f"Profit/Loss: ${row['Profit/Loss']}"
     )
+    
+    # Create node for employee with full details
     dot.node(row['Employee Name'], emp_details)
     
-    # Get average salary for roles
-    average_salary_row = average_salary[(average_salary['ASM'] == row['ASM']) & 
-                                         (average_salary['RSM'] == row['RSM']) & 
-                                         (average_salary['Distributor'] == row['Distributor']) & 
-                                         (average_salary['Super'] == row['Super']) & 
-                                         (average_salary['CNF'] == row['CNF'])]
-    
-    avg_salary = average_salary_row['Salary'].values[0] if not average_salary_row.empty else 0
-    
-    # Add edges with average salary
-    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
-    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
-    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
-    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
-    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
+    # Create nodes for CNF, Super, Distributor, RSM, ASM with only sales
+    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${row['Sales - After Closing']}")
+    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${row['Sales - After Closing']}")
+    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${row['Sales - After Closing']}")
+    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${row['Sales - After Closing']}")
+    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${row['Sales - After Closing']}")
 
     # Add relational hierarchy
-    dot.edge(row['RSM'], row['ASM'], label="Reports to")
+    dot.edge(row['RSM'], row['Employee Name'], label="Reports to")
     dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
     dot.edge(row['Super'], row['Distributor'], label="Supervised by")
     dot.edge(row['CNF'], row['Super'], label="Managed by")
