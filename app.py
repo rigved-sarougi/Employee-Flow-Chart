@@ -17,7 +17,7 @@ st.title("Employee Hierarchy and Sales Overview")
 selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
 filtered_data = data[data['Employee Name'] == selected_employee]
 
-# Grouping data to calculate total sales
+# Grouping data to calculate total sales and average salary
 cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
 super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
 distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
@@ -35,31 +35,36 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
     for index, row in cnf_sales.iterrows():
         cnf = row['CNF']
         total_cnf_sales = row['Sales - After Closing']
-        dot.node(cnf, f'CNF: {cnf}\nSales: ${total_cnf_sales:,}', shape='box')
+        total_expenses = employee_data[employee_data['CNF'] == cnf]['Total Expenses'].sum()
+        dot.node(cnf, f'CNF: {cnf}\nSales: ${total_cnf_sales:,}\nExpenses: ${total_expenses:,}', shape='box')
     
     # Adding Super sales
     for index, row in super_sales.iterrows():
         superv = row['Super']
         total_super_sales = row['Sales - After Closing']
-        dot.node(superv, f'Super: {superv}\nSales: ${total_super_sales:,}', shape='box')
+        total_expenses = employee_data[employee_data['Super'] == superv]['Total Expenses'].sum()
+        dot.node(superv, f'Super: {superv}\nSales: ${total_super_sales:,}\nExpenses: ${total_expenses:,}', shape='box')
     
     # Adding Distributor sales
     for index, row in distributor_sales.iterrows():
         distributor = row['Distributor']
         total_distributor_sales = row['Sales - After Closing']
-        dot.node(distributor, f'Distributor: {distributor}\nSales: ${total_distributor_sales:,}', shape='box')
+        total_expenses = employee_data[employee_data['Distributor'] == distributor]['Total Expenses'].sum()
+        dot.node(distributor, f'Distributor: {distributor}\nSales: ${total_distributor_sales:,}\nExpenses: ${total_expenses:,}', shape='box')
     
     # Adding RSM sales
     for index, row in rsm_sales.iterrows():
         rsm = row['RSM']
         total_rsm_sales = row['Sales - After Closing']
-        dot.node(rsm, f'RSM: {rsm}\nSales: ${total_rsm_sales:,}', shape='box')
+        total_expenses = employee_data[employee_data['RSM'] == rsm]['Total Expenses'].sum()
+        dot.node(rsm, f'RSM: {rsm}\nSales: ${total_rsm_sales:,}\nExpenses: ${total_expenses:,}', shape='box')
     
     # Adding ASM sales
     for index, row in asm_sales.iterrows():
         asm = row['ASM']
         total_asm_sales = row['Sales - After Closing']
-        dot.node(asm, f'ASM: {asm}\nSales: ${total_asm_sales:,}', shape='box')
+        total_expenses = employee_data[employee_data['ASM'] == asm]['Total Expenses'].sum()
+        dot.node(asm, f'ASM: {asm}\nSales: ${total_asm_sales:,}\nExpenses: ${total_expenses:,}', shape='box')
     
     # Iterate over filtered data to create the detailed employee view
     for index, row in employee_data.iterrows():
