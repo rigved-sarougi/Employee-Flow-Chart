@@ -22,7 +22,7 @@ def aggregate_employee_data(employee_name, df):
         'CNF': employee_data.groupby('CNF')['Sales - After Closing'].sum().to_dict()
     }
 
-    return employee_data, {  # Return employee data along with aggregated values
+    return {
         "total_sales": total_sales,
         "average_salary": average_salary,
         "total_expenses": total_expenses,
@@ -31,52 +31,50 @@ def aggregate_employee_data(employee_name, df):
     }
 
 # Function to create a flowchart for an aggregated employee data
-def create_aggregated_flowchart(employee_name, aggregated_data, employee_data):
+def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart = gv.Digraph(format="png")
     
     # Employee node with Average Salary, Summed Expenses, and Profit/Loss
     flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nAverage Salary: {aggregated_data['average_salary']}\n"
                                f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
-    # Create unique nodes and connect them hierarchically
-    asm_nodes = {asm: f"ASM_{asm}" for asm in aggregated_data['levels']['ASM']}
-    rsm_nodes = {rsm: f"RSM_{rsm}" for rsm in aggregated_data['levels']['RSM']}
-    dist_nodes = {dist: f"Distributor_{dist}" for dist in aggregated_data['levels']['Distributor']}
-    super_nodes = {sup: f"Super_{sup}" for sup in aggregated_data['levels']['Super']}
-    cnf_nodes = {cnf: f"CNF_{cnf}" for cnf in aggregated_data['levels']['CNF']}
+    # Add nodes and connect them hierarchically
+    asm_nodes = []
+    for asm, sales in aggregated_data['levels']['ASM'].items():
+        asm_node = f"ASM_{asm}"
+        flowchart.node(asm_node, f"ASM: {asm}\nSales: {sales}")
+        flowchart.edge("Employee", asm_node)  # Connect employee to ASM
+        asm_nodes.append(asm_node)
 
-    # Connect Employee to each ASM node
-    for asm, asm_id in asm_nodes.items():
-        flowchart.node(asm_id, f"ASM: {asm}\nSales: {aggregated_data['levels']['ASM'][asm]}")
-        flowchart.edge("Employee", asm_id)
+    rsm_nodes = []
+    for rsm, sales in aggregated_data['levels']['RSM'].items():
+        rsm_node = f"RSM_{rsm}"
+        flowchart.node(rsm_node, f"RSM: {rsm}\nSales: {sales}")
+        for asm_node in asm_nodes:
+            flowchart.edge(asm_node, rsm_node)  # Connect ASM to RSM
+        rsm_nodes.append(rsm_node)
 
-        # Connect each ASM to their RSM
-        for rsm in aggregated_data['levels']['RSM']:
-            if rsm in employee_data['RSM'].values:
-                rsm_id = rsm_nodes[rsm]
-                flowchart.node(rsm_id, f"RSM: {rsm}\nSales: {aggregated_data['levels']['RSM'][rsm]}")
-                flowchart.edge(asm_id, rsm_id)
+    dist_nodes = []
+    for dist, sales in aggregated_data['levels']['Distributor'].items():
+        dist_node = f"Distributor_{dist}"
+        flowchart.node(dist_node, f"Distributor: {dist}\nSales: {sales}")
+        for rsm_node in rsm_nodes:
+            flowchart.edge(rsm_node, dist_node)  # Connect RSM to Distributor
+        dist_nodes.append(dist_node)
 
-                # Connect each RSM to their Distributor
-                for dist in aggregated_data['levels']['Distributor']:
-                    if dist in employee_data['Distributor'].values:
-                        dist_id = dist_nodes[dist]
-                        flowchart.node(dist_id, f"Distributor: {dist}\nSales: {aggregated_data['levels']['Distributor'][dist]}")
-                        flowchart.edge(rsm_id, dist_id)
+    super_nodes = []
+    for sup, sales in aggregated_data['levels']['Super'].items():
+        super_node = f"Super_{sup}"
+        flowchart.node(super_node, f"Super: {sup}\nSales: {sales}")
+        for dist_node in dist_nodes:
+            flowchart.edge(dist_node, super_node)  # Connect Distributor to Super
+        super_nodes.append(super_node)
 
-                        # Connect each Distributor to their Super
-                        for sup in aggregated_data['levels']['Super']:
-                            if sup in employee_data['Super'].values:
-                                super_id = super_nodes[sup]
-                                flowchart.node(super_id, f"Super: {sup}\nSales: {aggregated_data['levels']['Super'][sup]}")
-                                flowchart.edge(dist_id, super_id)
-
-                                # Connect each Super to their CNF
-                                for cnf in aggregated_data['levels']['CNF']:
-                                    if cnf in employee_data['CNF'].values:
-                                        cnf_id = cnf_nodes[cnf]
-                                        flowchart.node(cnf_id, f"CNF: {cnf}\nSales: {aggregated_data['levels']['CNF'][cnf]}")
-                                        flowchart.edge(super_id, cnf_id)
+    for cnf, sales in aggregated_data['levels']['CNF'].items():
+        cnf_node = f"CNF_{cnf}"
+        flowchart.node(cnf_node, f"CNF: {cnf}\nSales: {sales}")
+        for super_node in super_nodes:
+            flowchart.edge(super_node, cnf_node)  # Connect Super to CNF
 
     return flowchart
 
@@ -87,8 +85,8 @@ st.title("Employee Flowchart System with Aggregated Data")
 selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
 
 # Aggregate data and create a flowchart for the selected employee
-employee_data, aggregated_data = aggregate_employee_data(selected_employee, data)
-flowchart = create_aggregated_flowchart(selected_employee, aggregated_data, employee_data)
+aggregated_data = aggregate_employee_data(selected_employee, data)
+flowchart = create_aggregated_flowchart(selected_employee, aggregated_data)
 
 # Display the flowchart
 st.graphviz_chart(flowchart.source)
