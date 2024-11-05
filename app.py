@@ -30,9 +30,13 @@ if state_filter:
 # Display filtered data
 st.dataframe(filtered_data)
 
-# Graphviz chart
+# Create a Graphviz chart
 dot = graphviz.Digraph()
 
+# Calculate total sales for each hierarchical level
+total_sales_by_role = data.groupby(['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])['Sales - After Closing'].sum().reset_index()
+
+# Create nodes for each employee and their respective hierarchical levels
 for _, row in filtered_data.iterrows():
     # Employee details
     emp_details = (
@@ -43,20 +47,37 @@ for _, row in filtered_data.iterrows():
         f"Profit/Loss: ${row['Profit/Loss']}"
     )
     
-    # Create node for employee with full details
+    # Create a node for the employee with complete details
     dot.node(row['Employee Name'], emp_details)
     
-    # Create nodes for CNF, Super, Distributor, RSM, ASM with only sales
-    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${row['Sales - After Closing']}")
-    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${row['Sales - After Closing']}")
-    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${row['Sales - After Closing']}")
-    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${row['Sales - After Closing']}")
-    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${row['Sales - After Closing']}")
-
-    # Add relational hierarchy
-    dot.edge(row['RSM'], row['Employee Name'], label="Reports to")
-    dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
-    dot.edge(row['Super'], row['Distributor'], label="Supervised by")
-    dot.edge(row['CNF'], row['Super'], label="Managed by")
+    # Get corresponding sales for each hierarchical level
+    sales_row = total_sales_by_role[(total_sales_by_role['ASM'] == row['ASM']) &
+                                     (total_sales_by_role['RSM'] == row['RSM']) &
+                                     (total_sales_by_role['Distributor'] == row['Distributor']) &
+                                     (total_sales_by_role['Super'] == row['Super']) &
+                                     (total_sales_by_role['CNF'] == row['CNF'])]
+    
+    # Create nodes for CNF, Super, Distributor, RSM, and ASM with correct sales
+    if not sales_row.empty:
+        cnf_sales = sales_row['Sales - After Closing'].values[0]
+        dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${cnf_sales}")
+        
+        super_sales = sales_row['Sales - After Closing'].values[0]
+        dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${super_sales}")
+        
+        distributor_sales = sales_row['Sales - After Closing'].values[0]
+        dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${distributor_sales}")
+        
+        rsm_sales = sales_row['Sales - After Closing'].values[0]
+        dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${rsm_sales}")
+        
+        asm_sales = sales_row['Sales - After Closing'].values[0]
+        dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${asm_sales}")
+    
+        # Add relational hierarchy
+        dot.edge(row['RSM'], row['Employee Name'], label="Reports to")
+        dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
+        dot.edge(row['Super'], row['Distributor'], label="Supervised by")
+        dot.edge(row['CNF'], row['Super'], label="Managed by")
 
 st.graphviz_chart(dot)
