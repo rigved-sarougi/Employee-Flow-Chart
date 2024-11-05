@@ -35,7 +35,7 @@ def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart = gv.Digraph(format="png")
     
     # Employee node with Average Salary, Summed Expenses, and Profit/Loss
-    flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nAverage Salary: {aggregated_data['average_salary']}\n"
+    flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nSalary: {aggregated_data['average_salary']}\n"
                                f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
     # Create nodes and connect them hierarchically
