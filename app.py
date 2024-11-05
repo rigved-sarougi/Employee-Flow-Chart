@@ -10,21 +10,17 @@ data['Sales - After Closing'] = data['Sales - After Closing'].replace('[\$,]', '
 data['Salary'] = data['Salary'].replace('[\$,]', '', regex=True).astype(float)
 data['Additional Monthly Expenses'] = data['Additional Monthly Expenses'].replace('[\$,]', '', regex=True).astype(float)
 
-# Calculate monthly expenses and profit/loss
+# Calculate total monthly expenses and profit/loss
 data['Total Monthly Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
 data['Profit/Loss'] = data['Sales - After Closing'] - data['Total Monthly Expenses']
 
-# Average salary by role
-average_salaries = data.groupby(['ASM', 'RSM', 'Distributor', 'Super', 'CNF']).agg({
-    'Salary': 'mean',
-    'Sales - After Closing': 'sum'
-}).reset_index()
+# Calculate average salary for each role
+average_salary = data.groupby(['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])['Salary'].mean().reset_index()
 
 # Filter options
 employee_filter = st.sidebar.multiselect('Select Employees', data['Employee Name'].unique())
 state_filter = st.sidebar.multiselect('Select States', data['Assigned State'].unique())
 
-# Filtering data based on selections
 filtered_data = data.copy()
 if employee_filter:
     filtered_data = filtered_data[filtered_data['Employee Name'].isin(employee_filter)]
@@ -37,7 +33,6 @@ st.dataframe(filtered_data)
 # Graphviz chart
 dot = graphviz.Digraph()
 
-# Add nodes for each employee in the filtered data
 for _, row in filtered_data.iterrows():
     emp_details = (
         f"Name: {row['Employee Name']}\n"
@@ -47,32 +42,27 @@ for _, row in filtered_data.iterrows():
         f"Profit/Loss: ${row['Profit/Loss']}"
     )
     dot.node(row['Employee Name'], emp_details)
+    
+    # Get average salary for roles
+    average_salary_row = average_salary[(average_salary['ASM'] == row['ASM']) & 
+                                         (average_salary['RSM'] == row['RSM']) & 
+                                         (average_salary['Distributor'] == row['Distributor']) & 
+                                         (average_salary['Super'] == row['Super']) & 
+                                         (average_salary['CNF'] == row['CNF'])]
+    
+    avg_salary = average_salary_row['Salary'].values[0] if not average_salary_row.empty else 0
+    
+    # Add edges with average salary
+    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
+    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
+    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
+    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
+    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${row['Sales - After Closing']}\nAvg Salary: ${avg_salary}")
 
-# Add hierarchy levels and average sales
-for _, row in average_salaries.iterrows():
-    # Average salary and total sales for each level
-    avg_salary = row['Salary']
-    total_sales = row['Sales - After Closing']
-
-    # Adding nodes for each role level
-    for role in ['CNF', 'Super', 'Distributor', 'RSM', 'ASM']:
-        role_name = row[role]
-        if role_name:
-            role_details = (
-                f"{role}: {role_name}\n"
-                f"Average Salary: ${avg_salary:.2f}\n"
-                f"Total Sales: ${total_sales:.2f}"
-            )
-            dot.node(role_name, role_details)
-
-            # Adding edges to represent hierarchy
-            if role == 'ASM':
-                dot.edge(role_name, row['RSM'], label="Reports to")
-            elif role == 'RSM':
-                dot.edge(role_name, row['Distributor'], label="Distributor of")
-            elif role == 'Distributor':
-                dot.edge(role_name, row['Super'], label="Supervised by")
-            elif role == 'Super':
-                dot.edge(role_name, row['CNF'], label="Managed by")
+    # Add relational hierarchy
+    dot.edge(row['RSM'], row['ASM'], label="Reports to")
+    dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
+    dot.edge(row['Super'], row['Distributor'], label="Supervised by")
+    dot.edge(row['CNF'], row['Super'], label="Managed by")
 
 st.graphviz_chart(dot)
