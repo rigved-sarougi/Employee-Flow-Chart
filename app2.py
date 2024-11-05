@@ -23,6 +23,9 @@ total_sales = filtered_data['Sales - After Closing'].sum()
 total_expenses = filtered_data['Additional Monthly Expenses'].sum()
 average_salary = filtered_data['Salary'].mean()
 
+# Calculate profit after grouping
+profit = total_sales - total_expenses
+
 # Grouping data to calculate total sales for hierarchy levels
 cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
 super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
@@ -67,7 +70,6 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
 
     # Add the employee node with total sales, total expenses, and average salary
     emp_name = employee_data['Employee Name'].iloc[0]  # Get employee name from the filtered data
-    profit = total_sales - total_expenses
     dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ${total_sales:,.2f}\nAverage Salary: ${avg_salary:,.2f}\nTotal Expenses: ${total_expenses:,.2f}\nProfit: ${profit:,.2f}', 
              shape='box', color='lightgreen' if profit > 0 else 'lightcoral')
 
