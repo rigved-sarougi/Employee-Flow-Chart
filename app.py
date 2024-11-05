@@ -14,8 +14,8 @@ data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'L
 st.title("Employee Hierarchy and Sales Overview")
 
 # Create a filter for selecting employees
-selected_city = st.selectbox("Select City", data['Assigned City'].unique())
-filtered_data = data[data['Assigned City'] == selected_city]
+selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
+filtered_data = data[data['Employee Name'] == selected_employee]
 
 # Function to create the flow chart
 def create_flow_chart(employee_data):
