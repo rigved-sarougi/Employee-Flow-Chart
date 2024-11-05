@@ -17,18 +17,20 @@ st.title("Employee Hierarchy and Sales Overview")
 selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
 filtered_data = data[data['Employee Name'] == selected_employee]
 
-# Grouping data to calculate total sales
+# Grouping data to calculate total sales and expenses
+total_sales = filtered_data['Sales - After Closing'].sum()
+total_expenses = filtered_data['Additional Monthly Expenses'].sum()
+average_salary = filtered_data['Salary'].mean()
+
+# Grouping data to calculate total sales for hierarchy levels
 cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
 super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
 distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
 rsm_sales = filtered_data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
 asm_sales = filtered_data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
-# Calculate average salary for the selected employee
-average_salary = filtered_data['Salary'].mean()
-
 # Function to create the flow chart
-def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, avg_salary):
+def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary):
     dot = Digraph()
     
     # Adding CNF sales
@@ -61,17 +63,13 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
         total_asm_sales = row['Sales - After Closing']
         dot.node(asm, f'ASM: {asm}\nSales: ${total_asm_sales:,}', shape='box')
     
-    # Iterate over filtered data to create the detailed employee view
+    # Add the employee node with total sales, total expenses, and average salary
+    emp_name = employee_data['Employee Name'].iloc[0]  # Get employee name from the filtered data
+    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ${total_sales:,.2f}\nAverage Salary: ${avg_salary:,.2f}\nTotal Expenses: ${total_expenses:,.2f}\nProfit: ${total_sales - total_expenses:,.2f}', 
+             shape='box', color='lightgreen' if (total_sales - total_expenses) > 0 else 'lightcoral')
+    
+    # Create edges based on CNF, Super, Distributor, RSM, ASM
     for index, row in employee_data.iterrows():
-        emp_name = row['Employee Name']
-        sales = row['Sales - After Closing']
-        expenses = row['Additional Monthly Expenses']
-        profit = row['Profit']
-        
-        # Add the employee node with average salary
-        dot.node(emp_name, f'Employee: {emp_name}\nSales: ${sales:,}\nSalary: ${avg_salary:,.2f}\nExpenses: ${expenses:,}\nProfit: ${profit:,}', shape='box', color='lightgreen' if profit > 0 else 'lightcoral')
-        
-        # Create edges based on CNF, Super, Distributor, RSM, ASM
         dot.edge(row['CNF'], row['Super'])
         dot.edge(row['Super'], row['Distributor'])
         dot.edge(row['Distributor'], row['RSM'])
@@ -81,7 +79,7 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
     return dot
 
 # Generate flow chart
-flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, average_salary)
+flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary)
 
 # Render flow chart in Streamlit
 st.graphviz_chart(flow_chart)
