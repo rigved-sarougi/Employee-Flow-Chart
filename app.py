@@ -14,9 +14,6 @@ data['Additional Monthly Expenses'] = data['Additional Monthly Expenses'].replac
 data['Total Monthly Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
 data['Profit/Loss'] = data['Sales - After Closing'] - data['Total Monthly Expenses']
 
-# Calculate average salary for each role
-average_salary = data.groupby(['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])['Salary'].mean().reset_index()
-
 # Filter options
 employee_filter = st.sidebar.multiselect('Select Employees', data['Employee Name'].unique())
 state_filter = st.sidebar.multiselect('Select States', data['Assigned State'].unique())
@@ -33,10 +30,7 @@ st.dataframe(filtered_data)
 # Create a Graphviz chart
 dot = graphviz.Digraph()
 
-# Calculate total sales for each hierarchical level
-total_sales_by_role = data.groupby(['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])['Sales - After Closing'].sum().reset_index()
-
-# Create nodes for each employee and their respective hierarchical levels
+# Create nodes for each employee
 for _, row in filtered_data.iterrows():
     # Employee details
     emp_details = (
@@ -49,35 +43,23 @@ for _, row in filtered_data.iterrows():
     
     # Create a node for the employee with complete details
     dot.node(row['Employee Name'], emp_details)
+
+    # Create hierarchical nodes for CNF, Super, Distributor, and RSM
+    # Get sales by role based on employee's hierarchy
+    total_sales = row['Sales - After Closing']
     
-    # Get corresponding sales for each hierarchical level
-    sales_row = total_sales_by_role[(total_sales_by_role['ASM'] == row['ASM']) &
-                                     (total_sales_by_role['RSM'] == row['RSM']) &
-                                     (total_sales_by_role['Distributor'] == row['Distributor']) &
-                                     (total_sales_by_role['Super'] == row['Super']) &
-                                     (total_sales_by_role['CNF'] == row['CNF'])]
+    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${total_sales}")
+    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${total_sales}")
+    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${total_sales}")
+    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${total_sales}")
     
-    # Create nodes for CNF, Super, Distributor, RSM, and ASM with correct sales
-    if not sales_row.empty:
-        cnf_sales = sales_row['Sales - After Closing'].values[0]
-        dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${cnf_sales}")
-        
-        super_sales = sales_row['Sales - After Closing'].values[0]
-        dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${super_sales}")
-        
-        distributor_sales = sales_row['Sales - After Closing'].values[0]
-        dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${distributor_sales}")
-        
-        rsm_sales = sales_row['Sales - After Closing'].values[0]
-        dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${rsm_sales}")
-        
-        asm_sales = sales_row['Sales - After Closing'].values[0]
-        dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${asm_sales}")
+    # Connecting ASM directly below RSM
+    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${total_sales}")
+    dot.edge(row['RSM'], row['ASM'], label="Reports to")
     
-        # Add relational hierarchy
-        dot.edge(row['RSM'], row['Employee Name'], label="Reports to")
-        dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
-        dot.edge(row['Super'], row['Distributor'], label="Supervised by")
-        dot.edge(row['CNF'], row['Super'], label="Managed by")
+    # Connect the hierarchical structure
+    dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
+    dot.edge(row['Super'], row['Distributor'], label="Supervised by")
+    dot.edge(row['CNF'], row['Super'], label="Managed by")
 
 st.graphviz_chart(dot)
