@@ -24,8 +24,20 @@ if employee_filter:
 if state_filter:
     filtered_data = filtered_data[filtered_data['Assigned State'].isin(state_filter)]
 
-# Display filtered data
-st.dataframe(filtered_data)
+# Aggregation logic
+if not filtered_data.empty:
+    total_sales = filtered_data['Sales - After Closing'].sum()
+    avg_salary = filtered_data['Salary'].mean()
+    total_expenses = filtered_data['Additional Monthly Expenses'].sum()
+    total_profit_loss = total_sales - (avg_salary + total_expenses)
+else:
+    total_sales = avg_salary = total_expenses = total_profit_loss = 0
+
+# Display aggregated data
+st.write(f"**Total Sales:** ${total_sales:,.2f}")
+st.write(f"**Average Salary:** ${avg_salary:,.2f}")
+st.write(f"**Total Additional Expenses:** ${total_expenses:,.2f}")
+st.write(f"**Total Profit/Loss:** ${total_profit_loss:,.2f}")
 
 # Graphviz chart
 dot = graphviz.Digraph()
@@ -33,10 +45,10 @@ dot = graphviz.Digraph()
 for _, row in filtered_data.iterrows():
     emp_details = (
         f"Name: {row['Employee Name']}\n"
-        f"Sales: ${row['Sales - After Closing']}\n"
-        f"Salary: ${row['Salary']}\n"
-        f"Expenses: ${row['Additional Monthly Expenses']}\n"
-        f"Profit/Loss: ${row['Profit/Loss']}"
+        f"Sales: ${row['Sales - After Closing']:,.2f}\n"
+        f"Salary: ${row['Salary']:,.2f}\n"
+        f"Expenses: ${row['Additional Monthly Expenses']:,.2f}\n"
+        f"Profit/Loss: ${row['Profit/Loss']:,.2f}"
     )
     dot.node(row['Employee Name'], emp_details)
     
