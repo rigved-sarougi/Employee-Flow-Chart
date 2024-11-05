@@ -22,7 +22,7 @@ def aggregate_employee_data(employee_name, df):
         'CNF': employee_data.groupby('CNF')['Sales - After Closing'].sum().to_dict()
     }
 
-    return {
+    return employee_data, {  # Return employee data along with aggregated values
         "total_sales": total_sales,
         "average_salary": average_salary,
         "total_expenses": total_expenses,
@@ -31,7 +31,7 @@ def aggregate_employee_data(employee_name, df):
     }
 
 # Function to create a flowchart for an aggregated employee data
-def create_aggregated_flowchart(employee_name, aggregated_data):
+def create_aggregated_flowchart(employee_name, aggregated_data, employee_data):
     flowchart = gv.Digraph(format="png")
     
     # Employee node with Average Salary, Summed Expenses, and Profit/Loss
@@ -87,8 +87,8 @@ st.title("Employee Flowchart System with Aggregated Data")
 selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
 
 # Aggregate data and create a flowchart for the selected employee
-aggregated_data = aggregate_employee_data(selected_employee, data)
-flowchart = create_aggregated_flowchart(selected_employee, aggregated_data)
+employee_data, aggregated_data = aggregate_employee_data(selected_employee, data)
+flowchart = create_aggregated_flowchart(selected_employee, aggregated_data, employee_data)
 
 # Display the flowchart
 st.graphviz_chart(flowchart.source)
