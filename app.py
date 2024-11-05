@@ -38,27 +38,43 @@ def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nAverage Salary: {aggregated_data['average_salary']}\n"
                                f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
-    # Dictionary to store the last created node for each level in the hierarchy
-    level_nodes = {}
+    # Create nodes and connect them hierarchically
+    asm_nodes = []
+    for asm, sales in aggregated_data['levels']['ASM'].items():
+        asm_node = f"ASM_{asm}"
+        flowchart.node(asm_node, f"ASM: {asm}\nSales: {sales}")
+        flowchart.edge("Employee", asm_node)
+        asm_nodes.append(asm_node)
 
-    # Add nodes for each unique level and connect them hierarchically
-    for level, details in aggregated_data["levels"].items():
-        for role, sales in details.items():
-            node_id = f"{level}_{role}"  # Create a unique node ID
-            flowchart.node(node_id, f"{level}: {role}\nSales: {sales}")
-            level_nodes[level] = node_id  # Store the last node for each level
+    rsm_nodes = []
+    for rsm, sales in aggregated_data['levels']['RSM'].items():
+        rsm_node = f"RSM_{rsm}"
+        flowchart.node(rsm_node, f"RSM: {rsm}\nSales: {sales}")
+        for asm_node in asm_nodes:
+            flowchart.edge(asm_node, rsm_node)
+        rsm_nodes.append(rsm_node)
 
-    # Connect hierarchy levels in the order
-    if 'ASM' in level_nodes:
-        flowchart.edge("Employee", level_nodes['ASM'])
-    if 'ASM' in level_nodes and 'RSM' in level_nodes:
-        flowchart.edge(level_nodes['ASM'], level_nodes['RSM'])
-    if 'RSM' in level_nodes and 'Distributor' in level_nodes:
-        flowchart.edge(level_nodes['RSM'], level_nodes['Distributor'])
-    if 'Distributor' in level_nodes and 'Super' in level_nodes:
-        flowchart.edge(level_nodes['Distributor'], level_nodes['Super'])
-    if 'Super' in level_nodes and 'CNF' in level_nodes:
-        flowchart.edge(level_nodes['Super'], level_nodes['CNF'])
+    dist_nodes = []
+    for dist, sales in aggregated_data['levels']['Distributor'].items():
+        dist_node = f"Distributor_{dist}"
+        flowchart.node(dist_node, f"Distributor: {dist}\nSales: {sales}")
+        for rsm_node in rsm_nodes:
+            flowchart.edge(rsm_node, dist_node)
+        dist_nodes.append(dist_node)
+
+    super_nodes = []
+    for sup, sales in aggregated_data['levels']['Super'].items():
+        super_node = f"Super_{sup}"
+        flowchart.node(super_node, f"Super: {sup}\nSales: {sales}")
+        for dist_node in dist_nodes:
+            flowchart.edge(dist_node, super_node)
+        super_nodes.append(super_node)
+
+    for cnf, sales in aggregated_data['levels']['CNF'].items():
+        cnf_node = f"CNF_{cnf}"
+        flowchart.node(cnf_node, f"CNF: {cnf}\nSales: {sales}")
+        for super_node in super_nodes:
+            flowchart.edge(super_node, cnf_node)
 
     return flowchart
 
