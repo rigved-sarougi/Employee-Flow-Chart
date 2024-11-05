@@ -38,23 +38,27 @@ def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nAverage Salary: {aggregated_data['average_salary']}\n"
                                f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
+    # Dictionary to store the last created node for each level in the hierarchy
+    level_nodes = {}
+
     # Add nodes for each unique level and connect them hierarchically
     for level, details in aggregated_data["levels"].items():
         for role, sales in details.items():
             node_id = f"{level}_{role}"  # Create a unique node ID
             flowchart.node(node_id, f"{level}: {role}\nSales: {sales}")
+            level_nodes[level] = node_id  # Store the last node for each level
 
-    # Define hierarchy
-    for asm in aggregated_data['levels']['ASM']:
-        flowchart.edge("Employee", f"ASM_{asm}")
-    for rsm in aggregated_data['levels']['RSM']:
-        flowchart.edge(f"ASM_{asm}", f"RSM_{rsm}")
-    for dist in aggregated_data['levels']['Distributor']:
-        flowchart.edge(f"RSM_{rsm}", f"Distributor_{dist}")
-    for sup in aggregated_data['levels']['Super']:
-        flowchart.edge(f"Distributor_{dist}", f"Super_{sup}")
-    for cnf in aggregated_data['levels']['CNF']:
-        flowchart.edge(f"Super_{sup}", f"CNF_{cnf}")
+    # Connect hierarchy levels in the order
+    if 'ASM' in level_nodes:
+        flowchart.edge("Employee", level_nodes['ASM'])
+    if 'ASM' in level_nodes and 'RSM' in level_nodes:
+        flowchart.edge(level_nodes['ASM'], level_nodes['RSM'])
+    if 'RSM' in level_nodes and 'Distributor' in level_nodes:
+        flowchart.edge(level_nodes['RSM'], level_nodes['Distributor'])
+    if 'Distributor' in level_nodes and 'Super' in level_nodes:
+        flowchart.edge(level_nodes['Distributor'], level_nodes['Super'])
+    if 'Super' in level_nodes and 'CNF' in level_nodes:
+        flowchart.edge(level_nodes['Super'], level_nodes['CNF'])
 
     return flowchart
 
