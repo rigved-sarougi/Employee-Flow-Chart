@@ -39,44 +39,21 @@ def create_aggregated_flowchart(employee_name, aggregated_data):
                                f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
     # Create nodes and connect them hierarchically
-    asm_nodes = []
-    for asm, sales in aggregated_data['levels']['ASM'].items():
-        asm_node = f"ASM_{asm}"
-        flowchart.node(asm_node, f"ASM: {asm}\nSales: {sales}")
-        flowchart.edge("Employee", asm_node)
-        asm_nodes.append(asm_node)
+    previous_level_nodes = []  # Keep track of the previous level nodes
 
-    for rsm, sales in aggregated_data['levels']['RSM'].items():
-        rsm_node = f"RSM_{rsm}"
-        flowchart.node(rsm_node, f"RSM: {rsm}\nSales: {sales}")
-        # Only connect RSMs to ASMs they are directly associated with
-        for asm_node in asm_nodes:
-            if asm_node.split('_')[1] in rsm:  # Assuming rsm contains asm info
-                flowchart.edge(asm_node, rsm_node)
-
-    for dist, sales in aggregated_data['levels']['Distributor'].items():
-        dist_node = f"Distributor_{dist}"
-        flowchart.node(dist_node, f"Distributor: {dist}\nSales: {sales}")
-        # Only connect Distributors to RSMs they are directly associated with
-        for rsm_node in aggregated_data['levels']['RSM']:
-            if rsm_node.split('_')[1] in dist:  # Assuming dist contains rsm info
-                flowchart.edge(rsm_node, dist_node)
-
-    for sup, sales in aggregated_data['levels']['Super'].items():
-        super_node = f"Super_{sup}"
-        flowchart.node(super_node, f"Super: {sup}\nSales: {sales}")
-        # Only connect Supers to Distributors they are directly associated with
-        for dist_node in aggregated_data['levels']['Distributor']:
-            if dist_node.split('_')[1] in sup:  # Assuming sup contains dist info
-                flowchart.edge(dist_node, super_node)
-
-    for cnf, sales in aggregated_data['levels']['CNF'].items():
-        cnf_node = f"CNF_{cnf}"
-        flowchart.node(cnf_node, f"CNF: {cnf}\nSales: {sales}")
-        # Only connect CNFs to Supers they are directly associated with
-        for super_node in aggregated_data['levels']['Super']:
-            if super_node.split('_')[1] in cnf:  # Assuming cnf contains sup info
-                flowchart.edge(super_node, cnf_node)
+    for level in ['ASM', 'RSM', 'Distributor', 'Super', 'CNF']:
+        current_level_nodes = []
+        for role, sales in aggregated_data['levels'][level].items():
+            node_id = f"{level}_{role}"  # Unique node ID
+            flowchart.node(node_id, f"{level}: {role}\nSales: {sales}")
+            if previous_level_nodes:  # If there are nodes in the previous level, connect them
+                for prev_node in previous_level_nodes:
+                    flowchart.edge(prev_node, node_id)
+            else:
+                # Connect directly to the employee for the first level (ASM)
+                flowchart.edge("Employee", node_id)
+            current_level_nodes.append(node_id)  # Add current node to the list for the next level
+        previous_level_nodes = current_level_nodes  # Update previous level nodes
 
     return flowchart
 
