@@ -58,4 +58,9 @@ for _, row in filtered_data.iterrows():
     dot.edge(row['Super'], row['Distributor'], label="Supervised by")
     dot.edge(row['CNF'], row['Super'], label="Managed by")
 
+# Customize node appearance
+dot.attr('node', shape='rectangle', style='filled', fillcolor='lightblue')
+dot.attr('edge', color='gray')
+
+# Render the graph
 st.graphviz_chart(dot)
