@@ -5,17 +5,17 @@ import graphviz as gv
 # Load the data
 data = pd.read_csv('data.csv')
 
-# Function to aggregate data by Employee Name
+# Function to aggregate data by Employee Name with average salary and summed values
 def aggregate_employee_data(employee_name, df):
     employee_data = df[df['Employee Name'] == employee_name]
     total_sales = employee_data['Sales - After Closing'].sum()
-    salary = employee_data['Salary'].iloc[0]  # Assuming salary is consistent for the employee
-    additional_expenses = employee_data['Additional Monthly Expenses'].iloc[0]  # Assuming expenses are consistent
-    profit = total_sales - (salary + additional_expenses)
+    average_salary = employee_data['Salary'].mean()  # Average salary for the employee
+    total_expenses = employee_data['Additional Monthly Expenses'].sum()  # Sum of additional expenses
+    profit = total_sales - (average_salary + total_expenses)
     return {
         "total_sales": total_sales,
-        "salary": salary,
-        "additional_expenses": additional_expenses,
+        "average_salary": average_salary,
+        "total_expenses": total_expenses,
         "profit": profit,
         "details": employee_data
     }
@@ -24,9 +24,9 @@ def aggregate_employee_data(employee_name, df):
 def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart = gv.Digraph(format="png")
     
-    # Employee node with Salary, Expenses, and Profit/Loss
-    flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nSalary: {aggregated_data['salary']}\n"
-                               f"Monthly Expenses: {aggregated_data['additional_expenses']}\nProfit: {aggregated_data['profit']}")
+    # Employee node with Average Salary, Summed Expenses, and Profit/Loss
+    flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nAverage Salary: {aggregated_data['average_salary']}\n"
+                               f"Total Expenses: {aggregated_data['total_expenses']}\nProfit: {aggregated_data['profit']}")
 
     # Add nodes for each unique hierarchy level with Sales details
     unique_roles = aggregated_data["details"].drop_duplicates(subset=['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])
