@@ -1,65 +1,57 @@
 import streamlit as st
 import pandas as pd
-import graphviz
+from graphviz import Digraph
 
-# Load data
+# Load data from CSV
 data = pd.read_csv('data.csv')
 
-# Process numeric values from strings
-data['Sales - After Closing'] = data['Sales - After Closing'].replace('[\$,]', '', regex=True).astype(float)
-data['Salary'] = data['Salary'].replace('[\$,]', '', regex=True).astype(float)
-data['Additional Monthly Expenses'] = data['Additional Monthly Expenses'].replace('[\$,]', '', regex=True).astype(float)
+# Calculate profit status
+data['Total Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
+data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
+data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
-# Calculate total monthly expenses and profit/loss
-data['Total Monthly Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
-data['Profit/Loss'] = data['Sales - After Closing'] - data['Total Monthly Expenses']
+# Streamlit app
+st.title("Employee Hierarchy and Sales Overview")
 
-# Filter options
-employee_filter = st.sidebar.multiselect('Select Employees', data['Employee Name'].unique())
-state_filter = st.sidebar.multiselect('Select States', data['Assigned State'].unique())
+# Create a filter for selecting employees
+selected_city = st.selectbox("Select City", data['Assigned City'].unique())
+filtered_data = data[data['Assigned City'] == selected_city]
 
-filtered_data = data.copy()
-if employee_filter:
-    filtered_data = filtered_data[filtered_data['Employee Name'].isin(employee_filter)]
-if state_filter:
-    filtered_data = filtered_data[filtered_data['Assigned State'].isin(state_filter)]
-
-# Display filtered data
-st.dataframe(filtered_data)
-
-# Create a Graphviz chart
-dot = graphviz.Digraph()
-
-# Create nodes for each employee
-for _, row in filtered_data.iterrows():
-    # Employee details
-    emp_details = (
-        f"Name: {row['Employee Name']}\n"
-        f"Sales: ${row['Sales - After Closing']}\n"
-        f"Salary: ${row['Salary']}\n"
-        f"Expenses: ${row['Additional Monthly Expenses']}\n"
-        f"Profit/Loss: ${row['Profit/Loss']}"
-    )
+# Function to create the flow chart
+def create_flow_chart(employee_data):
+    dot = Digraph()
     
-    # Create a node for the employee with complete details
-    dot.node(row['Employee Name'], emp_details)
+    for index, row in employee_data.iterrows():
+        cnf = row['CNF']
+        superv = row['Super']
+        distributor = row['Distributor']
+        rsm = row['RSM']
+        asm = row['ASM']
+        emp_name = row['Employee Name']
+        sales = row['Sales - After Closing']
+        salary = row['Salary']
+        expenses = row['Additional Monthly Expenses']
+        profit = row['Profit']
+        
+        # Add nodes for CNF, Super, Distributor, RSM, ASM, Employee
+        dot.node(cnf, f'CNF: {cnf}\nSales: ${sales:,}', shape='box')
+        dot.node(superv, f'Super: {superv}\nSales: ${sales:,}', shape='box')
+        dot.node(distributor, f'Distributor: {distributor}\nSales: ${sales:,}', shape='box')
+        dot.node(rsm, f'RSM: {rsm}\nSales: ${sales:,}', shape='box')
+        dot.node(asm, f'ASM: {asm}\nSales: ${sales:,}', shape='box')
+        dot.node(emp_name, f'Employee: {emp_name}\nSales: ${sales:,}\nSalary: ${salary:,}\nExpenses: ${expenses:,}\nProfit: ${profit:,}', shape='box', color='lightgreen' if profit > 0 else 'lightcoral')
+        
+        # Create edges
+        dot.edge(cnf, superv)
+        dot.edge(superv, distributor)
+        dot.edge(distributor, rsm)
+        dot.edge(rsm, asm)
+        dot.edge(asm, emp_name)
+    
+    return dot
 
-    # Create hierarchical nodes for CNF, Super, Distributor, and RSM
-    # Get sales by role based on employee's hierarchy
-    total_sales = row['Sales - After Closing']
-    
-    dot.node(row['CNF'], f"CNF: {row['CNF']}\nSales: ${total_sales}")
-    dot.node(row['Super'], f"Super: {row['Super']}\nSales: ${total_sales}")
-    dot.node(row['Distributor'], f"Distributor: {row['Distributor']}\nSales: ${total_sales}")
-    dot.node(row['RSM'], f"RSM: {row['RSM']}\nSales: ${total_sales}")
-    
-    # Connecting ASM directly below RSM
-    dot.node(row['ASM'], f"ASM: {row['ASM']}\nSales: ${total_sales}")
-    dot.edge(row['RSM'], row['ASM'], label="Reports to")
-    
-    # Connect the hierarchical structure
-    dot.edge(row['Distributor'], row['RSM'], label="Distributor of")
-    dot.edge(row['Super'], row['Distributor'], label="Supervised by")
-    dot.edge(row['CNF'], row['Super'], label="Managed by")
+# Generate flow chart
+flow_chart = create_flow_chart(filtered_data)
 
-st.graphviz_chart(dot)
+# Render flow chart in Streamlit
+st.graphviz_chart(flow_chart)
