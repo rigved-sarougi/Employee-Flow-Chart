@@ -3,46 +3,60 @@ import streamlit as st
 import graphviz as gv
 
 # Load the data
-data = pd.read_csv('Test of Employee - Data - Sheet5.csv')
+data = pd.read_csv('Data.csv')
 
-# Define function to create a flowchart for a given employee
-def create_employee_flowchart(employee_data):
+# Function to aggregate data by Employee Name
+def aggregate_employee_data(employee_name, df):
+    employee_data = df[df['Employee Name'] == employee_name]
+    total_sales = employee_data['Sales - After Closing'].sum()
+    salary = employee_data['Salary'].iloc[0]  # Assuming salary is consistent for the employee
+    additional_expenses = employee_data['Additional Monthly Expenses'].iloc[0]  # Assuming expenses are consistent
+    profit = total_sales - (salary + additional_expenses)
+    return {
+        "total_sales": total_sales,
+        "salary": salary,
+        "additional_expenses": additional_expenses,
+        "profit": profit,
+        "details": employee_data
+    }
+
+# Function to create a flowchart for an aggregated employee data
+def create_aggregated_flowchart(employee_name, aggregated_data):
     flowchart = gv.Digraph(format="png")
     
-    # Define nodes based on employee hierarchy
-    flowchart.node("Employee", f"{employee_data['Employee Name']}\nCity: {employee_data['Assigned City']}\nState: {employee_data['Assigned State']}")
-    flowchart.node("ASM", f"ASM: {employee_data['ASM']}\nSales: {employee_data['Sales - After Closing']}\nSalary: {employee_data['Salary']}")
-    flowchart.node("RSM", f"RSM: {employee_data['RSM']}")
-    flowchart.node("Distributor", f"Distributor: {employee_data['Distributor']}\nExpenses: {employee_data['Additional Monthly Expenses']}")
-    flowchart.node("Super", f"Super: {employee_data['Super']}")
-    flowchart.node("CNF", f"CNF: {employee_data['CNF']}")
+    # Employee node with Salary, Expenses, and Profit/Loss
+    flowchart.node("Employee", f"{employee_name}\nTotal Sales: {aggregated_data['total_sales']}\nSalary: {aggregated_data['salary']}\n"
+                               f"Monthly Expenses: {aggregated_data['additional_expenses']}\nProfit: {aggregated_data['profit']}")
+
+    # Add nodes for each unique hierarchy level with Sales details
+    unique_roles = aggregated_data["details"].drop_duplicates(subset=['ASM', 'RSM', 'Distributor', 'Super', 'CNF'])
     
-    # Define edges
-    flowchart.edge("Employee", "ASM")
-    flowchart.edge("ASM", "RSM")
-    flowchart.edge("RSM", "Distributor")
-    flowchart.edge("Distributor", "Super")
-    flowchart.edge("Super", "CNF")
+    for _, row in unique_roles.iterrows():
+        flowchart.node("ASM", f"ASM: {row['ASM']}\nSales: {row['Sales - After Closing']}")
+        flowchart.node("RSM", f"RSM: {row['RSM']}\nSales: {row['Sales - After Closing']}")
+        flowchart.node("Distributor", f"Distributor: {row['Distributor']}\nSales: {row['Sales - After Closing']}")
+        flowchart.node("Super", f"Super: {row['Super']}\nSales: {row['Sales - After Closing']}")
+        flowchart.node("CNF", f"CNF: {row['CNF']}\nSales: {row['Sales - After Closing']}")
+        
+        # Add edges based on hierarchy
+        flowchart.edge("Employee", "ASM")
+        flowchart.edge("ASM", "RSM")
+        flowchart.edge("RSM", "Distributor")
+        flowchart.edge("Distributor", "Super")
+        flowchart.edge("Super", "CNF")
     
     return flowchart
 
 # Streamlit app for displaying and filtering employees
-st.title("Employee Flowchart System")
+st.title("Employee Flowchart System with Aggregated Data")
 
 # Filtering options
-selected_employee = st.selectbox("Select Employee", ["All"] + list(data['Employee Name'].unique()))
-selected_city = st.selectbox("Select City", ["All"] + list(data['Assigned City'].unique()))
-sales_range = st.slider("Sales Range", int(data['Sales - After Closing'].min()), int(data['Sales - After Closing'].max()), (int(data['Sales - After Closing'].min()), int(data['Sales - After Closing'].max())))
+selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
+filtered_data = data[data['Employee Name'] == selected_employee]
 
-# Filter data based on user selection
-filtered_data = data.copy()
-if selected_employee != "All":
-    filtered_data = filtered_data[filtered_data['Employee Name'] == selected_employee]
-if selected_city != "All":
-    filtered_data = filtered_data[filtered_data['Assigned City'] == selected_city]
-filtered_data = filtered_data[(filtered_data['Sales - After Closing'] >= sales_range[0]) & (filtered_data['Sales - After Closing'] <= sales_range[1])]
+# Aggregate data and create a flowchart for the selected employee
+aggregated_data = aggregate_employee_data(selected_employee, data)
+flowchart = create_aggregated_flowchart(selected_employee, aggregated_data)
 
-# Generate flowchart for each filtered employee
-for _, employee_data in filtered_data.iterrows():
-    flowchart = create_employee_flowchart(employee_data)
-    st.graphviz_chart(flowchart.source)
+# Display the flowchart
+st.graphviz_chart(flowchart.source)
