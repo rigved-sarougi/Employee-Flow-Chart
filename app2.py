@@ -70,7 +70,7 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
 
     # Add the employee node with total sales, total expenses, and average salary
     emp_name = employee_data['Employee Name'].iloc[0]  # Get employee name from the filtered data
-    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nAverage Salary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}', 
+    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}', 
              shape='box', color='lightgreen' if profit > 0 else 'lightcoral')
 
     # Create edges based on CNF, Super, Distributor, RSM, ASM
@@ -95,5 +95,5 @@ st.markdown("### Summary of Employee Performance")
 st.write(f"**Employee Name:** {filtered_data['Employee Name'].iloc[0]}")
 st.write(f"**Total Sales:** ₹{total_sales:,.2f}")
 st.write(f"**Total Expenses:** ₹{total_expenses:,.2f}")
-st.write(f"**Average Salary:** ₹{average_salary:,.2f}")
+st.write(f"**Salary:** ₹{average_salary:,.2f}")
 st.write(f"**Profit:** ₹{profit:,.2f}")
