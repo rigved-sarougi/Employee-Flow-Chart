@@ -3,7 +3,7 @@ import streamlit as st
 import graphviz as gv
 
 # Load the data
-data = pd.read_csv('Data.csv')
+data = pd.read_csv('data.csv')
 
 # Function to aggregate data by Employee Name
 def aggregate_employee_data(employee_name, df):
