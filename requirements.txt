@@ -4,3 +4,4 @@ pdfkit
 graphviz
 reportlab
 Pillow
+PIL
