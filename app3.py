@@ -3,7 +3,9 @@ import pandas as pd
 from graphviz import Digraph
 
 # Load data from CSV and add 'Target' column
-data = pd.read_csv('data.csv') # Default target value; modify as needed or adjust in your CSV
+data = pd.read_csv('data.csv')
+if 'Target' not in data.columns:
+    data['Target'] = 100000  # Default target value; modify as needed or adjust in your CSV
 
 # Calculate profit status
 data['Total Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
@@ -54,7 +56,7 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
         total_super_sales = row['Sales - After Closing']
         dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', color='lightyellow', **node_style)
 
-    # Adding Distributor sales nodes with light purple color
+    # Adding Distributor sales nodes with changed color to light purple
     for index, row in distributor_sales.iterrows():
         distributor = row['Distributor']
         total_distributor_sales = row['Sales - After Closing']
@@ -102,7 +104,7 @@ st.markdown(f"""
 - **Total Sales:** `₹{total_sales:,.2f}`
 - **Target:** `₹{employee_target:,.2f}`
 - **Total Expenses:** `₹{total_expenses:,.2f}`
-- **Salary:** `₹{average_salary:,.2f}`
+- **Average Salary:** `₹{average_salary:,.2f}`
 - **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
 """)
 
