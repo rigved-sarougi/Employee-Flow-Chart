@@ -12,7 +12,7 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app
-st.title("🌟 Employee Sales Performance Dashboard")
+st.title("🌟Biolume - Employee Sales Flow Chart")
 st.markdown("Analyze and visualize the performance, expenses, and profit status of each employee in the sales hierarchy.")
 
 # Create a filter for selecting employees
