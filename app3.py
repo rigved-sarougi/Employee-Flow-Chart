@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from PIL import Image
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -38,44 +41,44 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
     
-    # Base style
-    node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
+    # Base style with blue border
+    node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica', 'color': 'blue', 'fillcolor': 'lightgray'}
 
     # Adding CNF sales nodes
     for index, row in cnf_sales.iterrows():
         cnf = row['CNF']
         total_cnf_sales = row['Sales - After Closing']
-        dot.node(cnf, f'CNF: {cnf}\nSales: ₹{total_cnf_sales:,.2f}', color='lightblue', **node_style)
+        dot.node(cnf, f'CNF: {cnf}\nSales: ₹{total_cnf_sales:,.2f}', **node_style)
 
     # Adding Super sales nodes
     for index, row in super_sales.iterrows():
         superv = row['Super']
         total_super_sales = row['Sales - After Closing']
-        dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', color='lightyellow', **node_style)
+        dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', **node_style)
 
     # Adding Distributor sales nodes
     for index, row in distributor_sales.iterrows():
         distributor = row['Distributor']
         total_distributor_sales = row['Sales - After Closing']
-        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', color='lightgreen', **node_style)
+        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', **node_style)
 
     # Adding RSM sales nodes
     for index, row in rsm_sales.iterrows():
         rsm = row['RSM']
         total_rsm_sales = row['Sales - After Closing']
-        dot.node(rsm, f'RSM: {rsm}\nSales: ₹{total_rsm_sales:,.2f}', color='lightcoral', **node_style)
+        dot.node(rsm, f'RSM: {rsm}\nSales: ₹{total_rsm_sales:,.2f}', **node_style)
 
     # Adding ASM sales nodes
     for index, row in asm_sales.iterrows():
         asm = row['ASM']
         total_asm_sales = row['Sales - After Closing']
-        dot.node(asm, f'ASM: {asm}\nSales: ₹{total_asm_sales:,.2f}', color='lightpink', **node_style)
+        dot.node(asm, f'ASM: {asm}\nSales: ₹{total_asm_sales:,.2f}', **node_style)
 
     # Add the employee node with summarized data
     emp_name = employee_data['Employee Name'].iloc[0]
     emp_color = 'lightgreen' if profit > 0 else 'lightcoral'
     dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
-             color=emp_color, **node_style)
+             fillcolor=emp_color, **node_style)
 
     # Create edges for the hierarchy
     for index, row in employee_data.iterrows():
@@ -85,16 +88,36 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], emp_name)
 
-    return dot
+    # Save as a PNG file
+    dot.render('employee_hierarchy_flowchart', format='png')
+    return 'employee_hierarchy_flowchart.png'
 
-# Generate flow chart
-flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary)
+# Generate flow chart and load image
+flow_chart_path = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary)
+flow_chart_image = Image.open(flow_chart_path)
 
-# Render flow chart in Streamlit
+# Display in Streamlit
 st.subheader("📈 Sales Hierarchy Flow Chart")
-st.graphviz_chart(flow_chart)
+st.image(flow_chart_image)
 
-# Display summary report below the chart
+# PDF Generation function
+def generate_pdf(image_path, filename="Employee_Sales_Report.pdf"):
+    c = canvas.Canvas(filename, pagesize=letter)
+    c.drawImage(image_path, 100, 400, width=400, height=400)  # Adjust position as needed
+    c.setFont("Helvetica", 12)
+    c.drawString(100, 750, "Employee Sales Performance Report")
+    c.drawString(100, 730, f"Employee: {selected_employee}")
+    c.drawString(100, 710, f"Total Sales: ₹{total_sales:,.2f}")
+    c.drawString(100, 690, f"Total Expenses: ₹{total_expenses:,.2f}")
+    c.drawString(100, 670, f"Average Salary: ₹{average_salary:,.2f}")
+    c.drawString(100, 650, f"Profit: ₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})")
+    c.save()
+
+# Generate and provide PDF download
+generate_pdf(flow_chart_path)
+st.markdown("[Download Employee Sales Report (PDF)](Employee_Sales_Report.pdf)", unsafe_allow_html=True)
+
+# Display summary
 st.markdown("### 📊 Employee Performance Summary")
 st.markdown(f"""
 - **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
@@ -103,8 +126,6 @@ st.markdown(f"""
 - **Average Salary:** `₹{average_salary:,.2f}`
 - **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
 """)
-
-# Emphasize on profit or loss status
 if profit > 0:
     st.success("This employee is in profit! 🎉")
 else:
