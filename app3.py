@@ -13,7 +13,7 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app
-st.title("🌟 Employee Sales Performance Dashboard")
+st.title("🌟Biolume - Employee Sales Performance Dashboard")
 st.markdown("Analyze and visualize the performance, expenses, and profit status of each employee in the sales hierarchy.")
 
 # Create a filter for selecting employees
@@ -56,11 +56,11 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
         total_super_sales = row['Sales - After Closing']
         dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', color='lightyellow', **node_style)
 
-    # Adding Distributor sales nodes with changed color to light purple
+    # Adding Distributor sales nodes with lavender color
     for index, row in distributor_sales.iterrows():
         distributor = row['Distributor']
         total_distributor_sales = row['Sales - After Closing']
-        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', color='lightpurple', **node_style)
+        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', color='lavender', **node_style)
 
     # Adding RSM sales nodes
     for index, row in rsm_sales.iterrows():
@@ -104,7 +104,7 @@ st.markdown(f"""
 - **Total Sales:** `₹{total_sales:,.2f}`
 - **Target:** `₹{employee_target:,.2f}`
 - **Total Expenses:** `₹{total_expenses:,.2f}`
-- **Average Salary:** `₹{average_salary:,.2f}`
+- **Salary:** `₹{average_salary:,.2f}`
 - **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
 """)
 
