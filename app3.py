@@ -24,7 +24,7 @@ filtered_data = data[data['Employee Name'] == selected_employee]
 total_sales = filtered_data['Sales - After Closing'].sum()
 total_expenses = filtered_data['Additional Monthly Expenses'].sum()
 average_salary = filtered_data['Salary'].mean()
-employee_target = filtered_data['Target'].mean()  # Average target for the selected employee
+employee_target = filtered_data['Target'].iloc[0]  # Target for the selected employee
 
 # Calculate profit after grouping
 profit = total_sales - total_expenses
