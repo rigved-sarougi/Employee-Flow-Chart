@@ -4,8 +4,6 @@ from graphviz import Digraph
 
 # Load data from CSV and add 'Target' column
 data = pd.read_csv('data.csv')
-if 'Target' not in data.columns:
-    data['Target'] = 100000  # Default target value; modify as needed or adjust in your CSV
 
 # Calculate profit status
 data['Total Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
@@ -24,7 +22,7 @@ filtered_data = data[data['Employee Name'] == selected_employee]
 total_sales = filtered_data['Sales - After Closing'].sum()
 total_expenses = filtered_data['Additional Monthly Expenses'].sum()
 average_salary = filtered_data['Salary'].mean()
-employee_target = filtered_data['Target'].iloc[0]  # Target for the selected employee
+employee_target = filtered_data['Target'].mean()  # Average target for the selected employee
 
 # Calculate profit after grouping
 profit = total_sales - total_expenses
