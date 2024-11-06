@@ -38,44 +38,44 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
     
-    # Color scheme
-    profit_color = 'lightgreen' if profit > 0 else 'lightcoral'
-    node_style = {'shape': 'box', 'style': 'filled', 'color': 'black', 'fontname': 'Helvetica'}
+    # Base style
+    node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
 
     # Adding CNF sales nodes
     for index, row in cnf_sales.iterrows():
         cnf = row['CNF']
         total_cnf_sales = row['Sales - After Closing']
-        dot.node(cnf, f'CNF: {cnf}\nSales: ₹{total_cnf_sales:,.2f}', **node_style, color='lightblue')
+        dot.node(cnf, f'CNF: {cnf}\nSales: ₹{total_cnf_sales:,.2f}', color='lightblue', **node_style)
 
     # Adding Super sales nodes
     for index, row in super_sales.iterrows():
         superv = row['Super']
         total_super_sales = row['Sales - After Closing']
-        dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', **node_style, color='lightyellow')
+        dot.node(superv, f'Super: {superv}\nSales: ₹{total_super_sales:,.2f}', color='lightyellow', **node_style)
 
     # Adding Distributor sales nodes
     for index, row in distributor_sales.iterrows():
         distributor = row['Distributor']
         total_distributor_sales = row['Sales - After Closing']
-        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', **node_style, color='lightgreen')
+        dot.node(distributor, f'Distributor: {distributor}\nSales: ₹{total_distributor_sales:,.2f}', color='lightgreen', **node_style)
 
     # Adding RSM sales nodes
     for index, row in rsm_sales.iterrows():
         rsm = row['RSM']
         total_rsm_sales = row['Sales - After Closing']
-        dot.node(rsm, f'RSM: {rsm}\nSales: ₹{total_rsm_sales:,.2f}', **node_style, color='lightcoral')
+        dot.node(rsm, f'RSM: {rsm}\nSales: ₹{total_rsm_sales:,.2f}', color='lightcoral', **node_style)
 
     # Adding ASM sales nodes
     for index, row in asm_sales.iterrows():
         asm = row['ASM']
         total_asm_sales = row['Sales - After Closing']
-        dot.node(asm, f'ASM: {asm}\nSales: ₹{total_asm_sales:,.2f}', **node_style, color='lightpink')
+        dot.node(asm, f'ASM: {asm}\nSales: ₹{total_asm_sales:,.2f}', color='lightpink', **node_style)
 
     # Add the employee node with summarized data
     emp_name = employee_data['Employee Name'].iloc[0]
+    emp_color = 'lightgreen' if profit > 0 else 'lightcoral'
     dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
-             shape='box', style='filled', color=profit_color)
+             color=emp_color, **node_style)
 
     # Create edges for the hierarchy
     for index, row in employee_data.iterrows():
