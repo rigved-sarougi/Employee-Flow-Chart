@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from io import BytesIO
+import os
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -77,15 +75,42 @@ def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributo
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], emp_name)
 
-    # Save the flowchart to a file
-    file_path = "/tmp/employee_flowchart.png"
-    dot.render(file_path)
-    return file_path
+    # Save and return the file path
+    employee_flow_chart_path = f"employee_flow_chart_{emp_name}.png"
+    dot.render(employee_flow_chart_path, view=False)
+    return employee_flow_chart_path
 
 # Generate the employee-specific flow chart
-employee_flowchart_path = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
+employee_flow_chart_path = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Function to create overall flowchart
+# Provide download link for the employee flow chart
+with open(employee_flow_chart_path, "rb") as file:
+    st.download_button(
+        label="Download Employee Flow Chart",
+        data=file,
+        file_name=employee_flow_chart_path,
+        mime="image/png"
+    )
+
+# Employee Performance Summary
+st.markdown("### 📊 Employee Performance Summary with Target Achievement")
+st.markdown(f"""
+- **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
+- **Total Sales:** `₹{total_sales:,.2f}`
+- **Target:** `₹{employee_target:,.2f}`
+- **Total Expenses:** `₹{total_expenses:,.2f}`
+- **Salary:** `₹{average_salary:,.2f}`
+- **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
+- **Target Achievement:** `{target_percentage:.2f}%`
+""")
+
+# Display the performance status with color-coded segment
+st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
+
+# Overall Hierarchy Flowchart (for the whole dataset)
+st.subheader("🌐 Overall Sales Hierarchy Flow Chart")
+
+# Function to create the overall hierarchy flow chart
 def create_overall_flow_chart(data):
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
@@ -118,47 +143,19 @@ def create_overall_flow_chart(data):
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], row['Employee Name'])
 
-    # Save the flowchart to a file
-    file_path = "/tmp/overall_flowchart.png"
-    dot.render(file_path)
-    return file_path
+    # Save and return the file path
+    overall_flow_chart_path = "overall_flow_chart.png"
+    dot.render(overall_flow_chart_path, view=False)
+    return overall_flow_chart_path
 
-# Generate the overall flow chart
-overall_flowchart_path = create_overall_flow_chart(data)
+# Generate the overall hierarchy flow chart
+overall_flow_chart_path = create_overall_flow_chart(data)
 
-# Function to create PDF
-def create_pdf(employee_flowchart_path, overall_flowchart_path, selected_employee, target_percentage, total_sales, employee_target, total_expenses, average_salary, profit):
-    packet = BytesIO()
-    c = canvas.Canvas(packet, pagesize=letter)
-    
-    # Add Employee Flowchart
-    c.drawImage(employee_flowchart_path, 50, 400, width=500, height=300)
-    
-    # Add Overall Flowchart
-    c.drawImage(overall_flowchart_path, 50, 50, width=500, height=300)
-    
-    # Add Employee Performance Summary
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, 700, f"Employee Name: {selected_employee}")
-    c.drawString(50, 680, f"Target Achievement: {target_percentage:.2f}%")
-    c.drawString(50, 660, f"Total Sales: ₹{total_sales:,.2f}")
-    c.drawString(50, 640, f"Employee Target: ₹{employee_target:,.2f}")
-    c.drawString(50, 620, f"Total Expenses: ₹{total_expenses:,.2f}")
-    c.drawString(50, 600, f"Salary: ₹{average_salary:,.2f}")
-    c.drawString(50, 580, f"Profit: ₹{profit:,.2f}")
-    
-    # Save PDF
-    c.save()
-    packet.seek(0)
-    return packet
-
-# Generate PDF
-pdf_data = create_pdf(employee_flowchart_path, overall_flowchart_path, selected_employee, target_percentage, total_sales, employee_target, total_expenses, average_salary, profit)
-
-# Provide download button for PDF
-st.download_button(
-    label="Download Sales Performance Report as PDF",
-    data=pdf_data,
-    file_name="employee_sales_performance_report.pdf",
-    mime="application/pdf"
-)
+# Provide download link for the overall flow chart
+with open(overall_flow_chart_path, "rb") as file:
+    st.download_button(
+        label="Download Overall Hierarchy Flow Chart",
+        data=file,
+        file_name=overall_flow_chart_path,
+        mime="image/png"
+    )
