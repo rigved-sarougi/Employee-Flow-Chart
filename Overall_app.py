@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
-import os
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -75,22 +74,14 @@ def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributo
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], emp_name)
 
-    # Save and return the file path
-    employee_flow_chart_path = f"employee_flow_chart_{emp_name}.png"
-    dot.render(employee_flow_chart_path, view=False)
-    return employee_flow_chart_path
+    return dot
 
 # Generate the employee-specific flow chart
-employee_flow_chart_path = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
+employee_flow_chart = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Provide download link for the employee flow chart
-with open(employee_flow_chart_path, "rb") as file:
-    st.download_button(
-        label="Download Employee Flow Chart",
-        data=file,
-        file_name=employee_flow_chart_path,
-        mime="image/png"
-    )
+# Render employee-specific flow chart
+st.subheader("📈 Employee-Specific Sales Hierarchy Flow Chart")
+st.graphviz_chart(employee_flow_chart)
 
 # Employee Performance Summary
 st.markdown("### 📊 Employee Performance Summary with Target Achievement")
@@ -143,19 +134,10 @@ def create_overall_flow_chart(data):
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], row['Employee Name'])
 
-    # Save and return the file path
-    overall_flow_chart_path = "overall_flow_chart.png"
-    dot.render(overall_flow_chart_path, view=False)
-    return overall_flow_chart_path
+    return dot
 
 # Generate the overall hierarchy flow chart
-overall_flow_chart_path = create_overall_flow_chart(data)
+overall_flow_chart = create_overall_flow_chart(data)
 
-# Provide download link for the overall flow chart
-with open(overall_flow_chart_path, "rb") as file:
-    st.download_button(
-        label="Download Overall Hierarchy Flow Chart",
-        data=file,
-        file_name=overall_flow_chart_path,
-        mime="image/png"
-    )
+# Render the overall hierarchy flow chart
+st.graphviz_chart(overall_flow_chart)
