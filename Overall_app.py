@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from graphviz import Digraph
-import matplotlib.image as mpimg
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -82,61 +81,55 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
 # Generate the flow chart
 flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Save flowchart as PNG
-flow_chart_path = '/mnt/data/flow_chart.png'
-flow_chart.render(flow_chart_path, view=False)
+# Save the chart as a PNG
+png_data = flow_chart.pipe(format='png')
 
-# Create summary content as a text box
-summary_content = f"""
-Employee Name: {filtered_data['Employee Name'].iloc[0]}
+# Convert the flow chart PNG into an image
+image = Image.open(io.BytesIO(png_data))
+
+# Add text overlay for performance and sales summary
+draw = ImageDraw.Draw(image)
+text = f"""
+Employee: {filtered_data['Employee Name'].iloc[0]}
 Total Sales: ₹{total_sales:,.2f}
 Target: ₹{employee_target:,.2f}
 Total Expenses: ₹{total_expenses:,.2f}
 Salary: ₹{average_salary:,.2f}
-Profit: {'+' if profit > 0 else ''}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
+Profit: ₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
 Target Achievement: {target_percentage:.2f}%
-
-Performance Status: {target_percentage:.2f}% Target Achievement
 """
 
-# Create performance matrix as a table (color-coded)
-fig, ax = plt.subplots(figsize=(6, 6))
-ax.axis('off')
+# Add the performance status color block
+draw.rectangle([20, 300, 200, 350], fill=color)
+draw.text((220, 310), f"Target Achievement Status: {target_percentage:.2f}%", fill="white")
 
-# Display performance status
-performance_color = {
-    'green': 'Above 90%',
-    'yellow': 'Below 90%',
-    'orange': 'Below 50%',
-    'red': 'Below 30%'
-}
+# Save the final image
+final_image_path = '/mnt/data/employee_performance.png'
+image.save(final_image_path)
 
-table_data = [[performance_color[color], f"{target_percentage:.2f}%"]]
-table = ax.table(cellText=table_data, colLabels=["Performance", "Percentage Achieved"], loc='center', cellLoc='center')
+# Display the image
+st.subheader("📈 Sales Hierarchy Flow Chart")
+st.image(image)
 
-# Save this summary + flowchart as an image
-combined_image_path = '/mnt/data/combined_image.png'
-
-# Show the flowchart
-img = mpimg.imread(flow_chart_path)
-fig, ax = plt.subplots(figsize=(12, 10))
-
-# Display flowchart and summary below
-ax.imshow(img)
-ax.text(0, 0, summary_content, fontsize=10, ha="left", va="bottom", color="black", bbox=dict(facecolor='white', alpha=0.7))
-
-# Save combined image
-plt.subplots_adjust(top=1.0, bottom=0.0)
-plt.savefig(combined_image_path, dpi=300, bbox_inches="tight")
-plt.close()
-
-# Display the combined image for verification
-st.image(combined_image_path)
-
-# Provide the link to download the combined PNG
+# Provide download button
 st.download_button(
-    label="Download Performance Report",
-    data=open(combined_image_path, "rb").read(),
-    file_name="Employee_Performance_Report.png",
+    label="Download Employee Performance Report",
+    data=open(final_image_path, "rb").read(),
+    file_name="employee_performance.png",
     mime="image/png"
 )
+
+# Optional: Show the employee's performance details
+st.markdown(f"### 📊 Employee Performance Summary with Target Achievement")
+st.markdown(f"""
+- **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
+- **Total Sales:** `₹{total_sales:,.2f}`
+- **Target:** `₹{employee_target:,.2f}`
+- **Total Expenses:** `₹{total_expenses:,.2f}`
+- **Salary:** `₹{average_salary:,.2f}`
+- **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
+- **Target Achievement:** `{target_percentage:.2f}%`
+""")
+
+# Color-coded performance indicator
+st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
