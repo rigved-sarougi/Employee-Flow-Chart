@@ -26,6 +26,10 @@ average_salary = filtered_data['Salary'].mean()
 employee_target = filtered_data['Target'].mean()
 profit = total_sales - total_expenses
 
+# Format currency with the ₹ symbol and commas for thousands
+def format_currency(value):
+    return f"₹{value:,.2f}"
+
 # Calculate target achievement percentage and color code
 target_percentage = (total_sales / employee_target) * 100 if employee_target > 0 else 0
 if target_percentage >= 90:
@@ -42,11 +46,11 @@ performance_summary = f"""
 Employee Performance Summary:
 ---------------------------
 Employee Name: {filtered_data['Employee Name'].iloc[0]}
-Total Sales: ₹{total_sales:,.2f}
-Target: ₹{employee_target:,.2f}
-Total Expenses: ₹{total_expenses:,.2f}
-Salary: ₹{average_salary:,.2f}
-Profit: ₹{'+' if profit > 0 else ''}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
+Total Sales: {format_currency(total_sales)}
+Target: {format_currency(employee_target)}
+Total Expenses: {format_currency(total_expenses)}
+Salary: {format_currency(average_salary)}
+Profit: {('+' if profit > 0 else '')}{format_currency(profit)} ({'Profit' if profit > 0 else 'Loss'})
 Target Achievement: {target_percentage:.2f}%
 """
 
