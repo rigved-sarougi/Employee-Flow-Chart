@@ -62,17 +62,19 @@ Target Achievement: {target_percentage:.2f}%
 # Create a more professional and styled image of the performance summary
 def generate_professional_performance_summary_image(summary_text, target_percentage):
     # Create a blank image with white background
-    img_width, img_height = 700, 400
+    img_width, img_height = 700, 450
     img = Image.new('RGB', (img_width, img_height), color='white')
     draw = ImageDraw.Draw(img)
 
-    # Define the font and size (you can change the font as needed)
+    # Define the font and size (increased font size and bold for target percentage)
     try:
-        font_header = ImageFont.truetype("arialbd.ttf", 18)  # Bold font for header
-        font_body = ImageFont.truetype("arial.ttf", 16)  # Regular font for body
+        font_header = ImageFont.truetype("arialbd.ttf", 20)  # Bold font for header
+        font_body = ImageFont.truetype("arial.ttf", 18)  # Regular font for body
+        font_bold = ImageFont.truetype("arialbd.ttf", 22)  # Bold font for percentage
     except IOError:
         font_header = ImageFont.load_default()
         font_body = ImageFont.load_default()
+        font_bold = ImageFont.load_default()
 
     # Draw a border around the image
     border_color = "#007bff"  # Blue border color
@@ -83,7 +85,7 @@ def generate_professional_performance_summary_image(summary_text, target_percent
     draw.text((20, 20), "Employee Performance Summary", font=font_header, fill=title_color)
 
     # Add the summary content with proper spacing
-    margin_top = 50
+    margin_top = 60
     draw.text((20, margin_top), summary_text, font=font_body, fill="black")
 
     # Add a colored background for target achievement status
@@ -91,9 +93,9 @@ def generate_professional_performance_summary_image(summary_text, target_percent
     achievement_box_height = 30
     draw.rectangle([20, img_height - 70, img_width - 20, img_height - 20], fill=achievement_color)
 
-    # Add the target achievement text at the bottom
+    # Add the target achievement text at the bottom, with bolded percentage
     target_text = f"Target Achievement: {target_percentage:.2f}%"
-    draw.text((20, img_height - 60), target_text, font=font_body, fill="white")
+    draw.text((20, img_height - 60), target_text, font=font_bold, fill="white")
 
     # Save the image in a BytesIO object
     img_io = io.BytesIO()
