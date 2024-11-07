@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
-from PIL import Image, ImageDraw, ImageFont
-import io
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -81,46 +79,12 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
 # Generate the flow chart
 flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Save the chart as a PNG
-png_data = flow_chart.pipe(format='png')
-
-# Convert the flow chart PNG into an image
-image = Image.open(io.BytesIO(png_data))
-
-# Add text overlay for performance and sales summary
-draw = ImageDraw.Draw(image)
-text = f"""
-Employee: {filtered_data['Employee Name'].iloc[0]}
-Total Sales: ₹{total_sales:,.2f}
-Target: ₹{employee_target:,.2f}
-Total Expenses: ₹{total_expenses:,.2f}
-Salary: ₹{average_salary:,.2f}
-Profit: ₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
-Target Achievement: {target_percentage:.2f}%
-"""
-
-# Add the performance status color block
-draw.rectangle([20, 300, 200, 350], fill=color)
-draw.text((220, 310), f"Target Achievement Status: {target_percentage:.2f}%", fill="white")
-
-# Save the final image
-final_image_path = '/mnt/data/employee_performance.png'
-image.save(final_image_path)
-
-# Display the image
+# Render flow chart
 st.subheader("📈 Sales Hierarchy Flow Chart")
-st.image(image)
+st.graphviz_chart(flow_chart)
 
-# Provide download button
-st.download_button(
-    label="Download Employee Performance Report",
-    data=open(final_image_path, "rb").read(),
-    file_name="employee_performance.png",
-    mime="image/png"
-)
-
-# Optional: Show the employee's performance details
-st.markdown(f"### 📊 Employee Performance Summary with Target Achievement")
+# Employee Performance Summary with Target Achievement
+st.markdown("### 📊 Employee Performance Summary with Target Achievement")
 st.markdown(f"""
 - **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
 - **Total Sales:** `₹{total_sales:,.2f}`
@@ -133,3 +97,27 @@ st.markdown(f"""
 
 # Color-coded performance indicator
 st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
+
+# Separate summaries for each hierarchy level
+st.markdown("### 🧩 Hierarchy Level Performance Summary")
+def display_hierarchy_summary(level_data, level_name):
+    for _, row in level_data.iterrows():
+        st.markdown(f"""
+        - **{level_name}:** `{row[level_name]}`
+        - **Total Sales:** `₹{row['Sales - After Closing']:,.2f}`
+        """)
+
+st.markdown("#### CNF Level")
+display_hierarchy_summary(cnf_sales, "CNF")
+
+st.markdown("#### Super Level")
+display_hierarchy_summary(super_sales, "Super")
+
+st.markdown("#### Distributor Level")
+display_hierarchy_summary(distributor_sales, "Distributor")
+
+st.markdown("#### RSM Level")
+display_hierarchy_summary(rsm_sales, "RSM")
+
+st.markdown("#### ASM Level")
+display_hierarchy_summary(asm_sales, "ASM")
