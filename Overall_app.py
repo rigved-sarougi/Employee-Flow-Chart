@@ -11,8 +11,8 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app setup
-st.title("🌟Biolume - Sales Hierarchy Flow Chart with Performance Matrix")
-st.markdown("Analyze the performance, expenses, profit, and target achievement status of each employee in the sales hierarchy.")
+st.title("🌟Biolume - Overall Sales Hierarchy Flow Chart")
+st.markdown("Analyze the sales hierarchy, performance, expenses, and profit for each employee in the organization.")
 
 # Employee selection filter
 selected_employee = st.selectbox("Select an Employee to View Details", data['Employee Name'].unique())
@@ -36,51 +36,53 @@ elif target_percentage >= 30:
 else:
     color = 'red'
 
-# Grouping data for hierarchy levels
+# Grouping data for hierarchy levels (CNF, Super, Distributor, RSM, ASM)
 cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
 super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
 distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
 rsm_sales = filtered_data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
 asm_sales = filtered_data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
-# Function to create the flow chart
-def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary, target):
+# Function to create the flow chart with hierarchical levels
+def create_hierarchy_flow_chart():
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
     
     node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
 
-    # Add CNF, Super, Distributor, RSM, and ASM sales nodes
-    for level, sales, color in [
-        ('CNF', cnf_sales, 'lightblue'),
-        ('Super', super_sales, 'lightyellow'),
-        ('Distributor', distributor_sales, 'lavender'),
-        ('RSM', rsm_sales, 'lightcoral'),
-        ('ASM', asm_sales, 'lightpink')
-    ]:
-        for _, row in sales.iterrows():
-            dot.node(row[level], f'{level}: {row[level]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color=color, **node_style)
+    # Add CNF, Super, Distributor, RSM, ASM sales nodes
+    for _, row in cnf_sales.iterrows():
+        dot.node(row['CNF'], f'CNF: {row["CNF"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color='lightblue', **node_style)
 
-    # Employee node with detailed information
-    emp_name = employee_data['Employee Name'].iloc[0]
-    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nTarget: ₹{target:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
-             color='lightblue', **node_style)
+    for _, row in super_sales.iterrows():
+        dot.node(row['Super'], f'Super: {row["Super"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color='lightyellow', **node_style)
 
-    # Hierarchical edges
-    for _, row in employee_data.iterrows():
+    for _, row in distributor_sales.iterrows():
+        dot.node(row['Distributor'], f'Distributor: {row["Distributor"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color='lavender', **node_style)
+
+    for _, row in rsm_sales.iterrows():
+        dot.node(row['RSM'], f'RSM: {row["RSM"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color='lightcoral', **node_style)
+
+    for _, row in asm_sales.iterrows():
+        dot.node(row['ASM'], f'ASM: {row["ASM"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color='lightpink', **node_style)
+
+    # Add employees below the ASM level
+    for _, row in filtered_data.iterrows():
+        dot.node(row['Employee Name'], f'Employee: {row["Employee Name"]}\nSales: ₹{row["Sales - After Closing"]:,.2f}\nTarget: ₹{row["Target"]:,.2f}', color='lightgreen', **node_style)
+
+    # Add edges to create hierarchy (CNF -> Super -> Distributor -> RSM -> ASM -> Employee)
+    for _, row in filtered_data.iterrows():
         dot.edge(row['CNF'], row['Super'])
         dot.edge(row['Super'], row['Distributor'])
         dot.edge(row['Distributor'], row['RSM'])
         dot.edge(row['RSM'], row['ASM'])
-        dot.edge(row['ASM'], emp_name)
+        dot.edge(row['ASM'], row['Employee Name'])
 
     return dot
 
-# Generate the flow chart
-flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
-
-# Render flow chart
-st.subheader("📈 Sales Hierarchy Flow Chart")
+# Generate and display the flow chart
+flow_chart = create_hierarchy_flow_chart()
+st.subheader("📈 Overall Sales Hierarchy Flow Chart")
 st.graphviz_chart(flow_chart)
 
 # Employee Performance Summary with Target Achievement
@@ -98,26 +100,3 @@ st.markdown(f"""
 # Color-coded performance indicator
 st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
 
-# Separate summaries for each hierarchy level
-st.markdown("### 🧩 Hierarchy Level Performance Summary")
-def display_hierarchy_summary(level_data, level_name):
-    for _, row in level_data.iterrows():
-        st.markdown(f"""
-        - **{level_name}:** `{row[level_name]}`
-        - **Total Sales:** `₹{row['Sales - After Closing']:,.2f}`
-        """)
-
-st.markdown("#### CNF Level")
-display_hierarchy_summary(cnf_sales, "CNF")
-
-st.markdown("#### Super Level")
-display_hierarchy_summary(super_sales, "Super")
-
-st.markdown("#### Distributor Level")
-display_hierarchy_summary(distributor_sales, "Distributor")
-
-st.markdown("#### RSM Level")
-display_hierarchy_summary(rsm_sales, "RSM")
-
-st.markdown("#### ASM Level")
-display_hierarchy_summary(asm_sales, "ASM")
