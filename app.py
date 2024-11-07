@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from graphviz import Digraph
 from PIL import Image, ImageDraw, ImageFont
 import io
 
@@ -30,13 +29,13 @@ profit = total_sales - total_expenses
 # Calculate target achievement percentage and color code
 target_percentage = (total_sales / employee_target) * 100 if employee_target > 0 else 0
 if target_percentage >= 90:
-    color = 'green'
+    color = '#28a745'  # Green for above 90%
 elif target_percentage >= 50:
-    color = 'yellow'
+    color = '#ffc107'  # Yellow for above 50%
 elif target_percentage >= 30:
-    color = 'orange'
+    color = '#fd7e14'  # Orange for above 30%
 else:
-    color = 'red'
+    color = '#dc3545'  # Red for below 30%
 
 # Employee Performance Summary
 performance_summary = f"""
@@ -51,20 +50,41 @@ Profit: ₹{'+' if profit > 0 else ''}₹{profit:,.2f} ({'Profit' if profit > 0 
 Target Achievement: {target_percentage:.2f}%
 """
 
-# Create image of performance summary
-def generate_performance_summary_image(summary_text):
+# Create a more professional and styled image of the performance summary
+def generate_professional_performance_summary_image(summary_text, target_percentage):
     # Create a blank image with white background
-    img = Image.new('RGB', (600, 300), color='white')
+    img_width, img_height = 700, 400
+    img = Image.new('RGB', (img_width, img_height), color='white')
     draw = ImageDraw.Draw(img)
 
     # Define the font and size (you can change the font as needed)
     try:
-        font = ImageFont.truetype("arial.ttf", 16)
+        font_header = ImageFont.truetype("arialbd.ttf", 18)  # Bold font for header
+        font_body = ImageFont.truetype("arial.ttf", 16)  # Regular font for body
     except IOError:
-        font = ImageFont.load_default()
+        font_header = ImageFont.load_default()
+        font_body = ImageFont.load_default()
 
-    # Add the performance summary text
-    draw.text((10, 10), summary_text, font=font, fill="black")
+    # Draw a border around the image
+    border_color = "#007bff"  # Blue border color
+    draw.rectangle([5, 5, img_width-5, img_height-5], outline=border_color, width=3)
+
+    # Add a title header with a different color
+    title_color = "#007bff"  # Blue color for the title
+    draw.text((20, 20), "Employee Performance Summary", font=font_header, fill=title_color)
+
+    # Add the summary content
+    margin_top = 50
+    draw.text((20, margin_top), summary_text, font=font_body, fill="black")
+
+    # Add a colored background for target achievement status
+    achievement_color = color
+    achievement_box_height = 30
+    draw.rectangle([20, img_height - 70, img_width - 20, img_height - 20], fill=achievement_color)
+
+    # Add the target achievement text at the bottom
+    target_text = f"Target Achievement: {target_percentage:.2f}%"
+    draw.text((20, img_height - 60), target_text, font=font_body, fill="white")
 
     # Save the image in a BytesIO object
     img_io = io.BytesIO()
@@ -72,8 +92,8 @@ def generate_performance_summary_image(summary_text):
     img_io.seek(0)
     return img_io
 
-# Generate the performance summary image
-img_io = generate_performance_summary_image(performance_summary)
+# Generate the professional performance summary image
+img_io = generate_professional_performance_summary_image(performance_summary, target_percentage)
 
 # Display the image in Streamlit
 st.subheader("📊 Employee Performance Summary with Target Achievement")
