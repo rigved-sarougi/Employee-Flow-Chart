@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
+import pdfkit
+import tempfile
+import os
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -98,46 +101,41 @@ st.markdown(f"""
 # Display the performance status with color-coded segment
 st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
 
-# Overall Hierarchy Flowchart (for the whole dataset)
-st.subheader("🌐 Overall Sales Hierarchy Flow Chart")
+# Convert HTML to PDF using pdfkit
+def convert_html_to_pdf(html_content):
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', encoding='utf-8') as temp_html_file:
+        temp_html_file.write(html_content)
+        temp_html_file.close()
 
-# Function to create the overall hierarchy flow chart
-def create_overall_flow_chart(data):
-    dot = Digraph(format='png')
-    dot.attr(rankdir='TB', size='12,10')
+        pdf_output_path = temp_html_file.name.replace(".html", ".pdf")
 
-    node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
+        # Generate the PDF from HTML file
+        pdfkit.from_file(temp_html_file.name, pdf_output_path)
 
-    # Get unique CNF, Super, Distributor, RSM, ASM, Employee levels
-    cnf_sales = data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
-    super_sales = data.groupby('Super')['Sales - After Closing'].sum().reset_index()
-    distributor_sales = data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
-    rsm_sales = data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
-    asm_sales = data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
+        return pdf_output_path
 
-    # Add CNF, Super, Distributor, RSM, and ASM sales nodes
-    for level, sales, color in [
-        ('CNF', cnf_sales, 'lightblue'),
-        ('Super', super_sales, 'lightyellow'),
-        ('Distributor', distributor_sales, 'lavender'),
-        ('RSM', rsm_sales, 'lightcoral'),
-        ('ASM', asm_sales, 'lightpink')
-    ]:
-        for _, row in sales.iterrows():
-            dot.node(row[level], f'{level}: {row[level]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color=color, **node_style)
+# Trigger PDF download
+if st.button("Download PDF"):
+    # Create HTML content
+    html_content = st.markdown("""
+        <html>
+        <head><title>Employee Sales Report</title></head>
+        <body>
+            <h1>Employee Performance Report</h1>
+            <p>Employee Name: {}</p>
+            <p>Total Sales: ₹{}</p>
+            <p>Target: ₹{}</p>
+            <p>Total Expenses: ₹{}</p>
+            <p>Salary: ₹{}</p>
+            <p>Profit: ₹{}</p>
+            <p>Target Achievement: {}%</p>
+        </body>
+        </html>
+    """.format(filtered_data['Employee Name'].iloc[0], total_sales, employee_target, total_expenses, average_salary, profit, target_percentage))
 
-    # Hierarchical edges
-    for _, row in data.iterrows():
-        dot.edge(row['CNF'], row['Super'])
-        dot.edge(row['Super'], row['Distributor'])
-        dot.edge(row['Distributor'], row['RSM'])
-        dot.edge(row['RSM'], row['ASM'])
-        dot.edge(row['ASM'], row['Employee Name'])
+    pdf_file = convert_html_to_pdf(html_content)
 
-    return dot
+    # Provide the download link for the generated PDF
+    with open(pdf_file, 'rb') as f:
+        st.download_button('Download PDF', f, file_name='Employee_Performance_Report.pdf', mime='application/pdf')
 
-# Generate the overall hierarchy flow chart
-overall_flow_chart = create_overall_flow_chart(data)
-
-# Render the overall hierarchy flow chart
-st.graphviz_chart(overall_flow_chart)
