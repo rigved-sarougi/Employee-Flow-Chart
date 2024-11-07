@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
-import pdfkit
-import tempfile
-import os
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -77,65 +77,88 @@ def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributo
         dot.edge(row['RSM'], row['ASM'])
         dot.edge(row['ASM'], emp_name)
 
-    return dot
+    # Save the flowchart to a file
+    file_path = "/tmp/employee_flowchart.png"
+    dot.render(file_path)
+    return file_path
 
 # Generate the employee-specific flow chart
-employee_flow_chart = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
+employee_flowchart_path = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Render employee-specific flow chart
-st.subheader("📈 Employee-Specific Sales Hierarchy Flow Chart")
-st.graphviz_chart(employee_flow_chart)
+# Function to create overall flowchart
+def create_overall_flow_chart(data):
+    dot = Digraph(format='png')
+    dot.attr(rankdir='TB', size='12,10')
 
-# Employee Performance Summary
-st.markdown("### 📊 Employee Performance Summary with Target Achievement")
-st.markdown(f"""
-- **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
-- **Total Sales:** `₹{total_sales:,.2f}`
-- **Target:** `₹{employee_target:,.2f}`
-- **Total Expenses:** `₹{total_expenses:,.2f}`
-- **Salary:** `₹{average_salary:,.2f}`
-- **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
-- **Target Achievement:** `{target_percentage:.2f}%`
-""")
+    node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
 
-# Display the performance status with color-coded segment
-st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
+    # Get unique CNF, Super, Distributor, RSM, ASM, Employee levels
+    cnf_sales = data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
+    super_sales = data.groupby('Super')['Sales - After Closing'].sum().reset_index()
+    distributor_sales = data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
+    rsm_sales = data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
+    asm_sales = data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
-# Convert HTML to PDF using pdfkit
-def convert_html_to_pdf(html_content):
-    with tempfile.NamedTemporaryFile(delete=False, mode='w', encoding='utf-8') as temp_html_file:
-        temp_html_file.write(html_content)
-        temp_html_file.close()
+    # Add CNF, Super, Distributor, RSM, and ASM sales nodes
+    for level, sales, color in [
+        ('CNF', cnf_sales, 'lightblue'),
+        ('Super', super_sales, 'lightyellow'),
+        ('Distributor', distributor_sales, 'lavender'),
+        ('RSM', rsm_sales, 'lightcoral'),
+        ('ASM', asm_sales, 'lightpink')
+    ]:
+        for _, row in sales.iterrows():
+            dot.node(row[level], f'{level}: {row[level]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color=color, **node_style)
 
-        pdf_output_path = temp_html_file.name.replace(".html", ".pdf")
+    # Hierarchical edges
+    for _, row in data.iterrows():
+        dot.edge(row['CNF'], row['Super'])
+        dot.edge(row['Super'], row['Distributor'])
+        dot.edge(row['Distributor'], row['RSM'])
+        dot.edge(row['RSM'], row['ASM'])
+        dot.edge(row['ASM'], row['Employee Name'])
 
-        # Generate the PDF from HTML file
-        pdfkit.from_file(temp_html_file.name, pdf_output_path)
+    # Save the flowchart to a file
+    file_path = "/tmp/overall_flowchart.png"
+    dot.render(file_path)
+    return file_path
 
-        return pdf_output_path
+# Generate the overall flow chart
+overall_flowchart_path = create_overall_flow_chart(data)
 
-# Trigger PDF download
-if st.button("Download PDF"):
-    # Create HTML content
-    html_content = st.markdown("""
-        <html>
-        <head><title>Employee Sales Report</title></head>
-        <body>
-            <h1>Employee Performance Report</h1>
-            <p>Employee Name: {}</p>
-            <p>Total Sales: ₹{}</p>
-            <p>Target: ₹{}</p>
-            <p>Total Expenses: ₹{}</p>
-            <p>Salary: ₹{}</p>
-            <p>Profit: ₹{}</p>
-            <p>Target Achievement: {}%</p>
-        </body>
-        </html>
-    """.format(filtered_data['Employee Name'].iloc[0], total_sales, employee_target, total_expenses, average_salary, profit, target_percentage))
+# Function to create PDF
+def create_pdf(employee_flowchart_path, overall_flowchart_path, selected_employee, target_percentage, total_sales, employee_target, total_expenses, average_salary, profit):
+    packet = BytesIO()
+    c = canvas.Canvas(packet, pagesize=letter)
+    
+    # Add Employee Flowchart
+    c.drawImage(employee_flowchart_path, 50, 400, width=500, height=300)
+    
+    # Add Overall Flowchart
+    c.drawImage(overall_flowchart_path, 50, 50, width=500, height=300)
+    
+    # Add Employee Performance Summary
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, 700, f"Employee Name: {selected_employee}")
+    c.drawString(50, 680, f"Target Achievement: {target_percentage:.2f}%")
+    c.drawString(50, 660, f"Total Sales: ₹{total_sales:,.2f}")
+    c.drawString(50, 640, f"Employee Target: ₹{employee_target:,.2f}")
+    c.drawString(50, 620, f"Total Expenses: ₹{total_expenses:,.2f}")
+    c.drawString(50, 600, f"Salary: ₹{average_salary:,.2f}")
+    c.drawString(50, 580, f"Profit: ₹{profit:,.2f}")
+    
+    # Save PDF
+    c.save()
+    packet.seek(0)
+    return packet
 
-    pdf_file = convert_html_to_pdf(html_content)
+# Generate PDF
+pdf_data = create_pdf(employee_flowchart_path, overall_flowchart_path, selected_employee, target_percentage, total_sales, employee_target, total_expenses, average_salary, profit)
 
-    # Provide the download link for the generated PDF
-    with open(pdf_file, 'rb') as f:
-        st.download_button('Download PDF', f, file_name='Employee_Performance_Report.pdf', mime='application/pdf')
-
+# Provide download button for PDF
+st.download_button(
+    label="Download Sales Performance Report as PDF",
+    data=pdf_data,
+    file_name="employee_sales_performance_report.pdf",
+    mime="application/pdf"
+)
