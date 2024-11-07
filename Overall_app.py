@@ -11,7 +11,7 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app setup
-st.title("🌟Biolume - Sales Hierarchy Flow Chart with Performance Matrix")
+st.title("🌟Biolume - Sales Flow Chart")
 st.markdown("Analyze the performance, expenses, profit, and target achievement status of each employee in the sales hierarchy.")
 
 # Employee selection filter
@@ -99,7 +99,7 @@ st.markdown(f"""
 st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
 
 # Overall Hierarchy Flowchart (for the whole dataset)
-st.subheader("🌐 Overall Sales Hierarchy Flow Chart")
+st.subheader("Overall Sales Flow Chart")
 
 # Function to create the overall hierarchy flow chart
 def create_overall_flow_chart(data):
