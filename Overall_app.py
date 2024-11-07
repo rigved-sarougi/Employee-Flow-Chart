@@ -11,24 +11,23 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app
-st.title("🌟 Biolume - Sales Hierarchy Flow Chart")
-st.markdown("Analyze and visualize the performance, expenses, and profit status of each role in the sales hierarchy.")
+st.title("🌟Biolume - Sales Hierarchy Flow Chart")
+st.markdown("Analyze and visualize the performance, expenses, and profit status at each hierarchy level in the sales structure.")
 
-# Role selection
-role = st.selectbox("Select a Role to View Details", ['Employee', 'ASM', 'RSM', 'Distributor', 'Super', 'CNF'])
+# Create a filter for selecting employees
+selected_employee = st.selectbox("Select an Employee to View Details", data['Employee Name'].unique())
+filtered_data = data[data['Employee Name'] == selected_employee]
 
-# Based on selected role, create a filter for specific individuals in that role
-selected_person = st.selectbox(f"Select a {role} to View Details", data[role].unique())
-filtered_data = data[data[role] == selected_person]
-
-# Group data to calculate total sales and expenses
+# Grouping data to calculate total sales and expenses
 total_sales = filtered_data['Sales - After Closing'].sum()
 total_expenses = filtered_data['Additional Monthly Expenses'].sum()
 average_salary = filtered_data['Salary'].mean()
-target = filtered_data['Target'].mean()  # Average target for the selected person
+employee_target = filtered_data['Target'].mean()  # Average target for the selected employee
+
+# Calculate profit after grouping
 profit = total_sales - total_expenses
 
-# Grouping data to calculate total sales for each level
+# Grouping data to calculate total sales for hierarchy levels
 cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
 super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
 distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
@@ -36,7 +35,7 @@ rsm_sales = filtered_data.groupby('RSM')['Sales - After Closing'].sum().reset_in
 asm_sales = filtered_data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
 # Function to create the flow chart
-def create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary, target):
+def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary, target):
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
     
@@ -73,42 +72,35 @@ def create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, 
         total_asm_sales = row['Sales - After Closing']
         dot.node(asm, f'ASM: {asm}\nSales: ₹{total_asm_sales:,.2f}', color='lightpink', **node_style)
 
-    # Add the selected role node with summarized data, including target
-    color_map = {
-        'Employee': 'lightblue',
-        'ASM': 'lightpink',
-        'RSM': 'lightcoral',
-        'Distributor': 'lavender',
-        'Super': 'lightyellow',
-        'CNF': 'lightblue'
-    }
-    selected_color = color_map[role]
-    dot.node(selected_person, f'{role}: {selected_person}\nTotal Sales: ₹{total_sales:,.2f}\nTarget: ₹{target:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
-             color=selected_color, **node_style)
+    # Add the employee node with summarized data, including target
+    emp_name = employee_data['Employee Name'].iloc[0]
+    emp_color = 'lightblue'  # Light blue for employee box
+    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nTarget: ₹{target:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
+             color=emp_color, **node_style)
 
     # Create edges for the hierarchy
-    for index, row in filtered_data.iterrows():
+    for index, row in employee_data.iterrows():
         dot.edge(row['CNF'], row['Super'])
         dot.edge(row['Super'], row['Distributor'])
         dot.edge(row['Distributor'], row['RSM'])
         dot.edge(row['RSM'], row['ASM'])
-        dot.edge(row['ASM'], row['Employee Name'])
+        dot.edge(row['ASM'], emp_name)
 
     return dot
 
-# Generate flow chart for the selected role
-flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, target)
+# Generate flow chart
+flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
 # Render flow chart in Streamlit
-st.subheader(f"📈 Sales Hierarchy Flow Chart for {role}: {selected_person}")
+st.subheader("📈 Sales Hierarchy Flow Chart")
 st.graphviz_chart(flow_chart)
 
 # Display summary report below the chart
-st.markdown("### 📊 Performance Summary")
+st.markdown("### 📊 Employee Performance Summary")
 st.markdown(f"""
-- **{role} Name:** `{selected_person}`
+- **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
 - **Total Sales:** `₹{total_sales:,.2f}`
-- **Target:** `₹{target:,.2f}`
+- **Target:** `₹{employee_target:,.2f}`
 - **Total Expenses:** `₹{total_expenses:,.2f}`
 - **Salary:** `₹{average_salary:,.2f}`
 - **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
@@ -116,6 +108,30 @@ st.markdown(f"""
 
 # Emphasize on profit or loss status
 if profit > 0:
-    st.success(f"This {role.lower()} is in profit! 🎉")
+    st.success("This employee is in profit! 🎉")
 else:
-    st.error(f"This {role.lower()} is currently operating at a loss. 📉")
+    st.error("This employee is currently operating at a loss. 📉")
+
+# Separate summaries for each hierarchy level
+st.markdown("### 🧩 Hierarchy Level Performance Summary")
+def display_hierarchy_summary(level_data, level_name):
+    for index, row in level_data.iterrows():
+        st.markdown(f"""
+        - **{level_name}:** `{row[level_name]}`
+        - **Total Sales:** `₹{row['Sales - After Closing']:,.2f}`
+        """)
+
+st.markdown("#### CNF Level")
+display_hierarchy_summary(cnf_sales, "CNF")
+
+st.markdown("#### Super Level")
+display_hierarchy_summary(super_sales, "Super")
+
+st.markdown("#### Distributor Level")
+display_hierarchy_summary(distributor_sales, "Distributor")
+
+st.markdown("#### RSM Level")
+display_hierarchy_summary(rsm_sales, "RSM")
+
+st.markdown("#### ASM Level")
+display_hierarchy_summary(asm_sales, "ASM")
