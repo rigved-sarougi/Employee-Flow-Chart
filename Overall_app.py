@@ -11,7 +11,8 @@ data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
 # Streamlit app setup
-st.title("🌟Biolume - Sales Hierarchy Flow Charts")
+st.title("🌟Biolume - Sales Hierarchy Flow Chart with Performance Matrix")
+st.markdown("Analyze the performance, expenses, profit, and target achievement status of each employee in the sales hierarchy.")
 
 # Employee selection filter
 selected_employee = st.selectbox("Select an Employee to View Details", data['Employee Name'].unique())
@@ -42,7 +43,7 @@ distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'
 rsm_sales = filtered_data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
 asm_sales = filtered_data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
-# Function to create the flow chart for a specific employee
+# Function to create flow chart for a specific employee
 def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary, target):
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
@@ -60,7 +61,7 @@ def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributo
         for _, row in sales.iterrows():
             dot.node(row[level], f'{level}: {row[level]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color=color, **node_style)
 
-    # Employee node with detailed information
+    # Add employee node with details
     emp_name = employee_data['Employee Name'].iloc[0]
     dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ₹{total_sales:,.2f}\nTarget: ₹{target:,.2f}\nSalary: ₹{avg_salary:,.2f}\nTotal Expenses: ₹{total_expenses:,.2f}\nProfit: ₹{profit:,.2f}',
              color='lightblue', **node_style)
@@ -76,13 +77,13 @@ def create_employee_flow_chart(employee_data, cnf_sales, super_sales, distributo
     return dot
 
 # Generate the employee-specific flow chart
-flow_chart = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
+employee_flow_chart = create_employee_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
 # Render employee-specific flow chart
-st.subheader("📈 Sales Hierarchy Flow Chart for Selected Employee")
-st.graphviz_chart(flow_chart)
+st.subheader("📈 Employee-Specific Sales Hierarchy Flow Chart")
+st.graphviz_chart(employee_flow_chart)
 
-# Employee Performance Summary with Target Achievement
+# Employee Performance Summary
 st.markdown("### 📊 Employee Performance Summary with Target Achievement")
 st.markdown(f"""
 - **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
@@ -94,15 +95,25 @@ st.markdown(f"""
 - **Target Achievement:** `{target_percentage:.2f}%`
 """)
 
-# Color-coded performance indicator
+# Display the performance status with color-coded segment
 st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
 
-# Generate the overall hierarchy flow chart
-def create_overall_hierarchy_flow_chart(cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales):
+# Overall Hierarchy Flowchart (for the whole dataset)
+st.subheader("🌐 Overall Sales Hierarchy Flow Chart")
+
+# Function to create the overall hierarchy flow chart
+def create_overall_flow_chart(data):
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='12,10')
-    
+
     node_style = {'shape': 'box', 'style': 'filled', 'fontname': 'Helvetica'}
+
+    # Get unique CNF, Super, Distributor, RSM, ASM, Employee levels
+    cnf_sales = data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
+    super_sales = data.groupby('Super')['Sales - After Closing'].sum().reset_index()
+    distributor_sales = data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
+    rsm_sales = data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
+    asm_sales = data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
 
     # Add CNF, Super, Distributor, RSM, and ASM sales nodes
     for level, sales, color in [
@@ -116,29 +127,17 @@ def create_overall_hierarchy_flow_chart(cnf_sales, super_sales, distributor_sale
             dot.node(row[level], f'{level}: {row[level]}\nSales: ₹{row["Sales - After Closing"]:,.2f}', color=color, **node_style)
 
     # Hierarchical edges
-    for _, row in cnf_sales.iterrows():
-        cnf = row['CNF']
-        super_sales_for_cnf = super_sales[super_sales['CNF'] == cnf]
-        for _, super_row in super_sales_for_cnf.iterrows():
-            dot.edge(cnf, super_row['Super'])
-            distributor_sales_for_super = distributor_sales[distributor_sales['Super'] == super_row['Super']]
-            for _, distributor_row in distributor_sales_for_super.iterrows():
-                dot.edge(super_row['Super'], distributor_row['Distributor'])
-                rsm_sales_for_distributor = rsm_sales[rsm_sales['Distributor'] == distributor_row['Distributor']]
-                for _, rsm_row in rsm_sales_for_distributor.iterrows():
-                    dot.edge(distributor_row['Distributor'], rsm_row['RSM'])
-                    asm_sales_for_rsm = asm_sales[asm_sales['RSM'] == rsm_row['RSM']]
-                    for _, asm_row in asm_sales_for_rsm.iterrows():
-                        dot.edge(rsm_row['RSM'], asm_row['ASM'])
-                        employee_sales_for_asm = data[data['ASM'] == asm_row['ASM']]
-                        for _, employee_row in employee_sales_for_asm.iterrows():
-                            dot.edge(asm_row['ASM'], employee_row['Employee Name'])
+    for _, row in data.iterrows():
+        dot.edge(row['CNF'], row['Super'])
+        dot.edge(row['Super'], row['Distributor'])
+        dot.edge(row['Distributor'], row['RSM'])
+        dot.edge(row['RSM'], row['ASM'])
+        dot.edge(row['ASM'], row['Employee Name'])
 
     return dot
 
-# Generate and render the overall hierarchy flow chart
-overall_hierarchy_flow_chart = create_overall_hierarchy_flow_chart(cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales)
+# Generate the overall hierarchy flow chart
+overall_flow_chart = create_overall_flow_chart(data)
 
-# Render the overall hierarchy flow chart below the employee-specific chart
-st.subheader("📊 Overall Sales Hierarchy Flow Chart")
-st.graphviz_chart(overall_hierarchy_flow_chart)
+# Render the overall hierarchy flow chart
+st.graphviz_chart(overall_flow_chart)
