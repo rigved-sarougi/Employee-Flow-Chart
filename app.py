@@ -26,9 +26,9 @@ average_salary = filtered_data['Salary'].mean()
 employee_target = filtered_data['Target'].mean()
 profit = total_sales - total_expenses
 
-# Format currency with the ₹ symbol and commas for thousands
+# Format currency with the Rs symbol and commas for thousands
 def format_currency(value):
-    return f"₹{value:,.2f}"
+    return f"Rs {value:,.2f}"
 
 # Calculate target achievement percentage and color code
 target_percentage = (total_sales / employee_target) * 100 if employee_target > 0 else 0
@@ -47,10 +47,15 @@ Employee Performance Summary:
 ---------------------------
 Employee Name: {filtered_data['Employee Name'].iloc[0]}
 Total Sales: {format_currency(total_sales)}
+
 Target: {format_currency(employee_target)}
+
 Total Expenses: {format_currency(total_expenses)}
+
 Salary: {format_currency(average_salary)}
+
 Profit: {('+' if profit > 0 else '')}{format_currency(profit)} ({'Profit' if profit > 0 else 'Loss'})
+
 Target Achievement: {target_percentage:.2f}%
 """
 
@@ -77,7 +82,7 @@ def generate_professional_performance_summary_image(summary_text, target_percent
     title_color = "#007bff"  # Blue color for the title
     draw.text((20, 20), "Employee Performance Summary", font=font_header, fill=title_color)
 
-    # Add the summary content
+    # Add the summary content with proper spacing
     margin_top = 50
     draw.text((20, margin_top), summary_text, font=font_body, fill="black")
 
