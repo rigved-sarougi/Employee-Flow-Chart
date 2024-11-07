@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from graphviz import Digraph
+import matplotlib.image as mpimg
+from PIL import Image
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
@@ -79,45 +82,61 @@ def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, 
 # Generate the flow chart
 flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary, employee_target)
 
-# Render flow chart
-st.subheader("📈 Sales Hierarchy Flow Chart")
-st.graphviz_chart(flow_chart)
+# Save flowchart as PNG
+flow_chart_path = '/mnt/data/flow_chart.png'
+flow_chart.render(flow_chart_path, view=False)
 
-# Employee Performance Summary with Target Achievement
-st.markdown("### 📊 Employee Performance Summary with Target Achievement")
-st.markdown(f"""
-- **Employee Name:** `{filtered_data['Employee Name'].iloc[0]}`
-- **Total Sales:** `₹{total_sales:,.2f}`
-- **Target:** `₹{employee_target:,.2f}`
-- **Total Expenses:** `₹{total_expenses:,.2f}`
-- **Salary:** `₹{average_salary:,.2f}`
-- **Profit:** `{('+' if profit > 0 else '')}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})`
-- **Target Achievement:** `{target_percentage:.2f}%`
-""")
+# Create summary content as a text box
+summary_content = f"""
+Employee Name: {filtered_data['Employee Name'].iloc[0]}
+Total Sales: ₹{total_sales:,.2f}
+Target: ₹{employee_target:,.2f}
+Total Expenses: ₹{total_expenses:,.2f}
+Salary: ₹{average_salary:,.2f}
+Profit: {'+' if profit > 0 else ''}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
+Target Achievement: {target_percentage:.2f}%
 
-# Color-coded performance indicator
-st.markdown(f"<div style='background-color:{color};padding:10px;border-radius:5px;color:white;text-align:center;'>Target Achievement Status: {target_percentage:.2f}%</div>", unsafe_allow_html=True)
+Performance Status: {target_percentage:.2f}% Target Achievement
+"""
 
-# Separate summaries for each hierarchy level
-st.markdown("### 🧩 Hierarchy Level Performance Summary")
-def display_hierarchy_summary(level_data, level_name):
-    for _, row in level_data.iterrows():
-        st.markdown(f"""
-        - **{level_name}:** `{row[level_name]}`
-        - **Total Sales:** `₹{row['Sales - After Closing']:,.2f}`
-        """)
+# Create performance matrix as a table (color-coded)
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.axis('off')
 
-st.markdown("#### CNF Level")
-display_hierarchy_summary(cnf_sales, "CNF")
+# Display performance status
+performance_color = {
+    'green': 'Above 90%',
+    'yellow': 'Below 90%',
+    'orange': 'Below 50%',
+    'red': 'Below 30%'
+}
 
-st.markdown("#### Super Level")
-display_hierarchy_summary(super_sales, "Super")
+table_data = [[performance_color[color], f"{target_percentage:.2f}%"]]
+table = ax.table(cellText=table_data, colLabels=["Performance", "Percentage Achieved"], loc='center', cellLoc='center')
 
-st.markdown("#### Distributor Level")
-display_hierarchy_summary(distributor_sales, "Distributor")
+# Save this summary + flowchart as an image
+combined_image_path = '/mnt/data/combined_image.png'
 
-st.markdown("#### RSM Level")
-display_hierarchy_summary(rsm_sales, "RSM")
+# Show the flowchart
+img = mpimg.imread(flow_chart_path)
+fig, ax = plt.subplots(figsize=(12, 10))
 
-st.markdown("#### ASM Level")
-display_hierarchy_summary(asm_sales, "ASM")
+# Display flowchart and summary below
+ax.imshow(img)
+ax.text(0, 0, summary_content, fontsize=10, ha="left", va="bottom", color="black", bbox=dict(facecolor='white', alpha=0.7))
+
+# Save combined image
+plt.subplots_adjust(top=1.0, bottom=0.0)
+plt.savefig(combined_image_path, dpi=300, bbox_inches="tight")
+plt.close()
+
+# Display the combined image for verification
+st.image(combined_image_path)
+
+# Provide the link to download the combined PNG
+st.download_button(
+    label="Download Performance Report",
+    data=open(combined_image_path, "rb").read(),
+    file_name="Employee_Performance_Report.png",
+    mime="image/png"
+)
