@@ -1,85 +1,88 @@
 import streamlit as st
 import pandas as pd
 from graphviz import Digraph
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 # Load data from CSV
 data = pd.read_csv('data.csv')
 
-# Calculate profit status
+# Calculate expenses, profit, and profit status
 data['Total Expenses'] = data['Salary'] + data['Additional Monthly Expenses']
 data['Profit'] = data['Sales - After Closing'] - data['Total Expenses']
 data['Profit Status'] = data['Profit'].apply(lambda x: 'Profit' if x > 0 else 'Loss')
 
-# Streamlit app
-st.title("Employee Hierarchy and Sales Overview")
+# Streamlit app setup
+st.title("🌟Biolume - Employee Sales Flow Chart with Performance Matrix")
+st.markdown("Analyze the performance, expenses, profit, and target achievement status of each employee in the sales hierarchy.")
 
-# Create a filter for selecting employees
-selected_employee = st.selectbox("Select Employee", data['Employee Name'].unique())
+# Employee selection filter
+selected_employee = st.selectbox("Select an Employee to View Details", data['Employee Name'].unique())
 filtered_data = data[data['Employee Name'] == selected_employee]
 
-# Grouping data to calculate total sales and expenses
+# Calculate metrics for the selected employee
 total_sales = filtered_data['Sales - After Closing'].sum()
 total_expenses = filtered_data['Additional Monthly Expenses'].sum()
 average_salary = filtered_data['Salary'].mean()
+employee_target = filtered_data['Target'].mean()
+profit = total_sales - total_expenses
 
-# Grouping data to calculate total sales for hierarchy levels
-cnf_sales = filtered_data.groupby('CNF')['Sales - After Closing'].sum().reset_index()
-super_sales = filtered_data.groupby('Super')['Sales - After Closing'].sum().reset_index()
-distributor_sales = filtered_data.groupby('Distributor')['Sales - After Closing'].sum().reset_index()
-rsm_sales = filtered_data.groupby('RSM')['Sales - After Closing'].sum().reset_index()
-asm_sales = filtered_data.groupby('ASM')['Sales - After Closing'].sum().reset_index()
+# Calculate target achievement percentage and color code
+target_percentage = (total_sales / employee_target) * 100 if employee_target > 0 else 0
+if target_percentage >= 90:
+    color = 'green'
+elif target_percentage >= 50:
+    color = 'yellow'
+elif target_percentage >= 30:
+    color = 'orange'
+else:
+    color = 'red'
 
-# Function to create the flow chart
-def create_flow_chart(employee_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, avg_salary):
-    dot = Digraph()
-    
-    # Adding CNF sales
-    for index, row in cnf_sales.iterrows():
-        cnf = row['CNF']
-        total_cnf_sales = row['Sales - After Closing']
-        dot.node(cnf, f'CNF: {cnf}\nSales: ${total_cnf_sales:,}', shape='box')
-    
-    # Adding Super sales
-    for index, row in super_sales.iterrows():
-        superv = row['Super']
-        total_super_sales = row['Sales - After Closing']
-        dot.node(superv, f'Super: {superv}\nSales: ${total_super_sales:,}', shape='box')
-    
-    # Adding Distributor sales
-    for index, row in distributor_sales.iterrows():
-        distributor = row['Distributor']
-        total_distributor_sales = row['Sales - After Closing']
-        dot.node(distributor, f'Distributor: {distributor}\nSales: ${total_distributor_sales:,}', shape='box')
-    
-    # Adding RSM sales
-    for index, row in rsm_sales.iterrows():
-        rsm = row['RSM']
-        total_rsm_sales = row['Sales - After Closing']
-        dot.node(rsm, f'RSM: {rsm}\nSales: ${total_rsm_sales:,}', shape='box')
-    
-    # Adding ASM sales
-    for index, row in asm_sales.iterrows():
-        asm = row['ASM']
-        total_asm_sales = row['Sales - After Closing']
-        dot.node(asm, f'ASM: {asm}\nSales: ${total_asm_sales:,}', shape='box')
-    
-    # Add the employee node with total sales, total expenses, and average salary
-    emp_name = employee_data['Employee Name'].iloc[0]  # Get employee name from the filtered data
-    dot.node(emp_name, f'Employee: {emp_name}\nTotal Sales: ${total_sales:,.2f}\nAverage Salary: ${avg_salary:,.2f}\nTotal Expenses: ${total_expenses:,.2f}\nProfit: ${total_sales - total_expenses:,.2f}', 
-             shape='box', color='lightgreen' if (total_sales - total_expenses) > 0 else 'lightcoral')
-    
-    # Create edges based on CNF, Super, Distributor, RSM, ASM
-    for index, row in employee_data.iterrows():
-        dot.edge(row['CNF'], row['Super'])
-        dot.edge(row['Super'], row['Distributor'])
-        dot.edge(row['Distributor'], row['RSM'])
-        dot.edge(row['RSM'], row['ASM'])
-        dot.edge(row['ASM'], emp_name)
-    
-    return dot
+# Employee Performance Summary
+performance_summary = f"""
+Employee Performance Summary:
+---------------------------
+Employee Name: {filtered_data['Employee Name'].iloc[0]}
+Total Sales: ₹{total_sales:,.2f}
+Target: ₹{employee_target:,.2f}
+Total Expenses: ₹{total_expenses:,.2f}
+Salary: ₹{average_salary:,.2f}
+Profit: ₹{'+' if profit > 0 else ''}₹{profit:,.2f} ({'Profit' if profit > 0 else 'Loss'})
+Target Achievement: {target_percentage:.2f}%
+"""
 
-# Generate flow chart
-flow_chart = create_flow_chart(filtered_data, cnf_sales, super_sales, distributor_sales, rsm_sales, asm_sales, total_sales, total_expenses, average_salary)
+# Create image of performance summary
+def generate_performance_summary_image(summary_text):
+    # Create a blank image with white background
+    img = Image.new('RGB', (600, 300), color='white')
+    draw = ImageDraw.Draw(img)
 
-# Render flow chart in Streamlit
-st.graphviz_chart(flow_chart)
+    # Define the font and size (you can change the font as needed)
+    try:
+        font = ImageFont.truetype("arial.ttf", 16)
+    except IOError:
+        font = ImageFont.load_default()
+
+    # Add the performance summary text
+    draw.text((10, 10), summary_text, font=font, fill="black")
+
+    # Save the image in a BytesIO object
+    img_io = io.BytesIO()
+    img.save(img_io, format='PNG')
+    img_io.seek(0)
+    return img_io
+
+# Generate the performance summary image
+img_io = generate_performance_summary_image(performance_summary)
+
+# Display the image in Streamlit
+st.subheader("📊 Employee Performance Summary with Target Achievement")
+st.image(img_io, caption='Employee Performance Summary', use_column_width=True)
+
+# Provide a download link for the image
+st.download_button(
+    label="Download Employee Performance Summary",
+    data=img_io,
+    file_name="employee_performance_summary.png",
+    mime="image/png"
+)
