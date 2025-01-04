@@ -1,0 +1,47 @@
+Employee Name,Designation,ASM,RSM,Distributor,Super,CNF,Assigned City,Assigned State,Sales - After Closing,Salary,Additional Monthly Expenses,Target
+Abdul Samad,BDM - NOIDA & GHAZIABAD,Nil,Nil,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,0,25000,5000,50000
+Pradeep Kumar Verma,BDM - SOUTH DELHI & NOIDA,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,134492,25000,5000,50000
+Sanjeeb Das,BDE - KOLKATTA,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,199033,25000,5000,50000
+Tanu Jha,BDE - JAMSHEDPUR,Rahul Kumar,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,94146,25000,5000,50000
+Mritunjay Pandey,BDE - RANCHI,Rahul Kumar,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,109023,25000,5000,50000
+Gaurav Chand,BDM - AGRA & MATHURA,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,21000,25000,5000,50000
+Sarika Vilas Pawar,BDE - Pune 1,Bholaram Prakash Kachewar,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,123149,25000,5000,50000
+Archana Jaswant More,BDE - Pune 2,Bholaram Prakash Kachewar,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,104172,25000,5000,50000
+Lasuklang,BDE - Shillong,Mriganka Dev Mahanta,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,43390,25000,5000,50000
+Sherwin Tennyson,SR. BDE - COIMBATORE,Nil,Rajan Amarnath,Dist_1,Super_1,CNF_1,SOUTH INDIA,SOUTH INDIA,225348,25000,5000,50000
+SANJEEV SINGH,BDM - MORADABAD,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,116032,25000,5000,50000
+B. B. Lalatendu,Sr. BDE - Cuttack & Bhubaneshwar,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,218576,25000,5000,50000
+Atul Jain,BDE - Dehradun,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,103091,25000,5000,50000
+Karan Sharma,BDM - Lucknow,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,79868,25000,5000,50000
+Suparna Adhikari,BDE - Howrah & Hooghly,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,257860,25000,5000,50000
+Jyoti Sidhu,BDE - Ludhiana,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,109904,25000,5000,50000
+Manik Parashar,BDE - Una,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,34340,25000,5000,50000
+Neha Kanojiya,BDE - Raipur,Rahul Kumar,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,176009,25000,5000,50000
+Ankit Johari,Sr. BDE - Bareilly,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,27061,25000,5000,50000
+Gourav Sharma,BDE - Chandigarh,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,64003,25000,5000,50000
+Mayank Singh,BDM - Chhattisgarh,Rahul Kumar,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,213352,25000,5000,50000
+Mohit Thakur,BDE - East Delhi & Ghaziabad,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,227468,25000,5000,50000
+Shobha Singh,BDE - Navi Mumbai,Pravesh Shirke,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,65644,25000,5000,50000
+Ajay Singh,SO - Guwahati & Lower Assam,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,146136,25000,5000,50000
+Durga Prasad,BDE - Vijaywada,Karthik TSV,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,SOUTH INDIA,SOUTH INDIA,30045,25000,5000,50000
+Syed Jani,BDO - Secunderabad,Navin Kumar Chatla,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,SOUTH INDIA,SOUTH INDIA,104003,25000,5000,50000
+Purabi Das,SO - Guwahati,Mriganka Dev Mahanta,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,41633,25000,5000,50000
+Souvik Mitra,BDM - Kolkata,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,183122,25000,5000,50000
+Arvind Singh,BDM - Western Mumbai,Pravesh Shirke,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,114756,25000,5000,50000
+Sashikant Mallick,BDE - Bhubaneshwar,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,63810,25000,5000,50000
+Moin Khan,Sr. BDM - South Delhi & Jaipur,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,177932,25000,5000,50000
+Boopathy K,BDE - Chennai,M. Dinesh Kumar,Rajan Amarnath,Dist_1,Super_1,CNF_1,SOUTH INDIA,SOUTH INDIA,18545,25000,5000,50000
+Mayur Vanvi,BDM - Rajkot,Nil,Dharmendra Panchal,Dist_1,Super_1,CNF_1,CENTRAL INDIA,CENTRAL INDIA,75812,25000,5000,50000
+Anil Sharma,BDE - Amritsar,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,0,25000,5000,50000
+Harshal Mahesh Khadekar,SO - Nashik,Bholaram Prakash Kachewar,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,131110,25000,5000,50000
+Sujoy Chakraborty,BDE - South Kolkata,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,99550,25000,5000,50000
+Ajay Mondal,BDM - Siliguri,Somanth Basu,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,12450,25000,5000,50000
+Varinder Singh,BDE - Patiala,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,0,25000,5000,50000
+Sarita Kumari,SO - Rudrapur,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,68890,25000,5000,50000
+Sujata Pandit,BDE - Central Mumbai,Pravesh Shirke,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,WEST INDIA,WEST INDIA,81639,25000,5000,50000
+Preeti Sharma,BDE - Jalandhar,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,157815,25000,5000,50000
+Abhilasha Yadav,BDE - Jabalpur,Nil,Dharmendra Panchal,Dist_1,Super_1,CNF_1,CENTRAL INDIA,CENTRAL INDIA,63122,25000,5000,50000
+Raghupatti Katta,BDE - Hyderabad,Navin Kumar Chatla,A Jagadishwera Rao,Dist_1,Super_1,CNF_1,SOUTH INDIA,SOUTH INDIA,28971,25000,5000,50000
+Priyanka Das,BDE - Dibrugarh,Mriganka Dev Mahanta,Nil,Dist_1,Super_1,CNF_1,EAST INDIA,EAST INDIA,155499,25000,5000,50000
+Megha Goswami,BDM - East Delhi,Nil,Prashant Sharma,Dist_1,Super_1,CNF_1,NORTH INDIA,NORTH INDIA,28365,25000,5000,50000
+M. Sayeedullah,BDE - Bhopal,Nil,Dharmendra Panchal,Dist_1,Super_1,CNF_1,CENTRAL INDIA,CENTRAL INDIA,50591,25000,5000,50000
